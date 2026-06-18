@@ -1,11 +1,8 @@
+.agents/skills/
 .next/
-node_modules/
 .vercel/
-.env
-.env.local
-.DS_Store
-*.tsbuildinfo
-npm-debug.log*
+node_modules/
 supabase/.branches/
 supabase/.temp/
 supabase/snippets/
+*.tsbuildinfo
