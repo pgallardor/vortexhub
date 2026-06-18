@@ -1,12 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { Field } from "@/components/frontend";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -29,8 +27,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         return;
       }
 
-      router.refresh();
-      router.replace(redirectTo);
+      window.location.assign(redirectTo);
     } catch {
       setErrorMessage("No pudimos iniciar sesión. Revisa que Supabase local esté activo.");
     } finally {
