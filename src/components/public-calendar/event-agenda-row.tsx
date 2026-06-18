@@ -29,7 +29,7 @@ export function EventAgendaRow({
   return (
     <Link
       className="agenda-event"
-      href={`/stores/${event.storeSlug}/events/${event.slug}`}
+      href={`/stores/${event.storeSlug}/events/${event.slug}?from=home`}
       aria-label={`Ver ${event.title} de ${event.storeName}`}
     >
       <span

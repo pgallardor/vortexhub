@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/auth/login-form";
 import { Brand } from "@/components/frontend";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function safeRedirectTo(value: string | undefined) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return "/admin";
@@ -16,12 +14,6 @@ export default async function LoginPage({
 }) {
   const { redirectTo: redirectToParam } = await searchParams;
   const redirectTo = safeRedirectTo(redirectToParam);
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) redirect(redirectTo);
 
   return (
     <main className="auth-page">

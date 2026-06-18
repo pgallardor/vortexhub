@@ -39,7 +39,7 @@ export function EventCard({ event }: { event: EventSummary }) {
   return (
     <Link
       className="event-card"
-      href={`/stores/${event.storeSlug}/events/${event.slug}`}
+      href={`/stores/${event.storeSlug}/events/${event.slug}?from=store`}
       aria-label={`Ver ${event.title} de ${event.storeName}`}
     >
       <div

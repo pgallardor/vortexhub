@@ -1,8 +1,8 @@
-export function LoadingState({ label = "Cargando contenido" }: { label?: string }) {
+export function LoadingState({ label }: { label?: string }) {
   return (
     <div className="loading-state" role="status" aria-live="polite">
       <span className="loading-spinner" aria-hidden="true" />
-      <span>{label}</span>
+      {label ? <span>{label}</span> : <span className="sr-only">Cargando</span>}
     </div>
   );
 }

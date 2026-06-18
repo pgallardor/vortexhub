@@ -32,10 +32,13 @@ function formatEntryFee(event: { entryFee: { amount: number; currency: string } 
 
 export default async function PublicEventPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ storeSlug: string; eventId: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { storeSlug, eventId } = await params;
+  const { from } = await searchParams;
   const service = new PublicCalendarService(await createSupabaseServerClient());
   let eventDetail: PublicEventDetail;
 
@@ -47,6 +50,9 @@ export default async function PublicEventPage({
   }
 
   const event = mapPublicEventDetail(eventDetail);
+  const backLink = from === "home"
+    ? { href: "/#events", label: "← Volver a home" }
+    : { href: `/stores/${event.storeSlug}`, label: `← Volver al calendario de ${event.storeName}` };
   const bannerStyle = event.bannerUrl
     ? {
         "--detail-banner-image": `url("${event.bannerUrl}")`,
@@ -57,7 +63,7 @@ export default async function PublicEventPage({
   return (
     <PublicShell>
       <main className="page-container section">
-        <Link className="back-link" href={`/stores/${event.storeSlug}`}>← Volver al calendario de {event.storeName}</Link>
+        <Link className="back-link" href={backLink.href}>{backLink.label}</Link>
         <div
           className={`detail-banner tone-${event.bannerTone}${event.bannerUrl ? " has-image" : ""}`}
           style={bannerStyle}

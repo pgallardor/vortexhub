@@ -43,6 +43,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   outline: 2px solid var(--primary);
   outline-offset: 3px;
 }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 h1, h2, h3, p { margin-top: 0; }
 h1 { margin-bottom: .6rem; font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1.02; letter-spacing: -.045em; }
 h2 { margin-bottom: .55rem; letter-spacing: -.025em; }
@@ -329,7 +330,10 @@ p { color: var(--muted); line-height: 1.65; }
 .admin-nav a { padding: .7rem .8rem; border-radius: 8px; color: var(--muted); font-size: .88rem; font-weight: 750; }
 .admin-nav a:hover, .admin-nav a.active { color: var(--foreground); background: var(--surface); }
 .admin-nav a.active { box-shadow: inset 2px 0 var(--primary); }
-.stage-chip { margin-top: auto; padding: .85rem; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: .72rem; }
+.admin-logout-form { margin-top: auto; }
+.admin-logout-button { width: 100%; padding: .65rem .8rem; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: transparent; text-align: left; font-size: .88rem; font-weight: 750; }
+.admin-logout-button:hover { color: var(--foreground); background: var(--surface); }
+.stage-chip { padding: .85rem; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: .72rem; }
 .admin-main { min-width: 0; }
 .admin-content { width: min(1120px, calc(100% - 3rem)); margin-inline: auto; padding: 3rem 0; }
 .admin-content-wide { width: calc(100% - 3rem); }

@@ -40,13 +40,18 @@ export function AdminShell({
             </>
           ) : null}
         </nav>
+        <form action="/auth/logout" method="post" className="admin-logout-form">
+          <button className="admin-logout-button" type="submit">Cerrar sesión</button>
+        </form>
         <div className="stage-chip">MVP Stage 1 · Publicación</div>
       </aside>
       <div className="admin-main">
         <header className="admin-mobile-header">
           <div className="admin-mobile-topbar">
             <Brand />
-            <Link className="text-link" href="/">Salir</Link>
+            <form action="/auth/logout" method="post">
+              <button className="admin-logout-button" type="submit">Cerrar sesión</button>
+            </form>
           </div>
           <nav className="admin-mobile-nav" aria-label="Navegación administrativa móvil">
             <Link className={navClassName(pathname, "/admin")} href="/admin">Resumen</Link>
