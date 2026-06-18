@@ -55,6 +55,8 @@ export type PublicEventDetail = {
   branchId?: string | null;
   branchName: string | null;
   branchAddressLine: string | null;
+  branchLatitude?: number | string | null;
+  branchLongitude?: number | string | null;
   entryFeeAmount: number | string | null;
   entryFeeCurrency: string | null;
   bannerMode: "platform" | "custom";
@@ -235,6 +237,14 @@ export function mapPublicEventDetail(item: PublicEventDetail): EventSummary {
     branchName: item.locationMode === "online" ? "Online" : item.branchName ?? "Ubicación",
     address: addressForDetail(item),
     city: item.locationMode === "online" ? null : item.locationCity,
+    region: item.locationMode === "online" ? null : item.locationRegion,
+    countryCode: item.locationMode === "online" ? null : item.locationCountryCode,
+    latitude: item.locationMode === "branch" && item.branchLatitude != null
+      ? Number(item.branchLatitude)
+      : null,
+    longitude: item.locationMode === "branch" && item.branchLongitude != null
+      ? Number(item.branchLongitude)
+      : null,
     entryFee: entryFeeForDetail(item),
     seriesId: null,
     seriesName: null,

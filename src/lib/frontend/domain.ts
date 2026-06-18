@@ -28,6 +28,11 @@ export interface BranchSummary {
   name: string;
   city: string;
   address: string;
+  region: string | null;
+  countryCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  timezone: string | null;
   status: BranchStatus;
 }
 
@@ -53,6 +58,10 @@ export interface EventSummary {
   branchName: string;
   address: string;
   city: string | null;
+  region?: string | null;
+  countryCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   entryFee: {
     amount: number;
     currency: string;

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { BranchForm } from "@/components/admin/branch-form";
 import { AdminBranchList } from "@/components/admin/branch-list";
 import { PageHeader } from "@/components/frontend";
 import { getAdminStore } from "@/lib/frontend/admin-data";
@@ -17,9 +18,10 @@ export default async function AdminBranchesPage({ params }: { params: Promise<{ 
         description="Cada sucursal representa una sede física estable de la tienda."
         action={
           // TODO(auth): show this action only to owners and admins with valid store scope.
-          <button className="button button-primary" type="button">Crear sucursal</button>
+          <a className="button button-primary" href="#new-branch">Crear sucursal</a>
         }
       />
+      <BranchForm store={store} />
       <AdminBranchList branches={workspace.branches} />
     </>
   );

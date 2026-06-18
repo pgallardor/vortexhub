@@ -1,9 +1,8 @@
 import { z } from "zod";
-import { countryCodeSchema, slugSchema } from "@/lib/validation/common";
+import { countryCodeSchema } from "@/lib/validation/common";
 
 export const createBranchSchema = z.object({
   name: z.string().trim().min(2).max(160),
-  slug: slugSchema.optional(),
   addressLine: z.string().trim().max(500).nullable().optional(),
   city: z.string().trim().max(120).nullable().optional(),
   region: z.string().trim().max(120).nullable().optional(),

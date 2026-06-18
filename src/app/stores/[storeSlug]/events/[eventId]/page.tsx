@@ -6,6 +6,7 @@ import {
   mapPublicEventDetail,
   type PublicEventDetail,
 } from "@/lib/frontend/public-calendar-data";
+import type { EventSummary } from "@/lib/frontend/domain";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/http/errors";
 import { PublicCalendarService } from "@/services/public-calendar-service";
@@ -28,6 +29,45 @@ function formatEntryFee(event: { entryFee: { amount: number; currency: string } 
     currency: event.entryFee.currency,
     maximumFractionDigits: 0,
   }).format(event.entryFee.amount);
+}
+
+function mapQueryForEvent(event: EventSummary) {
+  if (event.locationMode !== "branch") return null;
+  if (event.latitude != null && event.longitude != null) {
+    return `${event.latitude},${event.longitude}`;
+  }
+
+  return event.address && event.address !== "Dirección por confirmar" ? event.address : null;
+}
+
+function EventLocationWidget({ event }: { event: EventSummary }) {
+  const mapQuery = mapQueryForEvent(event);
+  if (!mapQuery) return null;
+
+  const encodedQuery = encodeURIComponent(mapQuery);
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
+  const embedUrl = `https://www.google.com/maps?q=${encodedQuery}&z=16&output=embed`;
+
+  return (
+    <section className="panel-card location-widget" aria-labelledby="event-location-heading">
+      <div className="location-widget-copy">
+        <p className="eyebrow">Ubicación</p>
+        <h2 id="event-location-heading">{event.branchName}</h2>
+        <p>{event.address}</p>
+        <a className="button button-secondary" href={mapsUrl} rel="noreferrer" target="_blank">
+          Abrir en Google Maps ↗
+        </a>
+      </div>
+      <div className="location-map-frame">
+        <iframe
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          src={embedUrl}
+          title={`Mapa de ${event.branchName}`}
+        />
+      </div>
+    </section>
+  );
 }
 
 export default async function PublicEventPage({
@@ -78,18 +118,21 @@ export default async function PublicEventPage({
           </div>
         </div>
         <div className="detail-grid">
-          <article className="panel-card">
-            <p className="eyebrow">Sobre el evento</p>
-            <h2>{event.title}</h2>
-            <p className="detail-description">{event.description}</p>
-            <div className="detail-facts">
-              <div><span>Juego</span><strong>{event.game.name}</strong></div>
-              <div><span>Formato</span><strong>{event.formatName ?? "Sin formato específico"}</strong></div>
-              <div><span>Lugar</span><strong>{event.locationLabel}</strong></div>
-              <div><span>Dirección</span><strong>{event.address}</strong></div>
-              <div><span>Valor</span><strong>{formatEntryFee(event)}</strong></div>
-            </div>
-          </article>
+          <div className="detail-main">
+            <article className="panel-card">
+              <p className="eyebrow">Sobre el evento</p>
+              <h2>{event.title}</h2>
+              <p className="detail-description">{event.description}</p>
+              <div className="detail-facts">
+                <div><span>Juego</span><strong>{event.game.name}</strong></div>
+                <div><span>Formato</span><strong>{event.formatName ?? "Sin formato específico"}</strong></div>
+                <div><span>Lugar</span><strong>{event.locationLabel}</strong></div>
+                <div><span>Dirección</span><strong>{event.address}</strong></div>
+                <div><span>Valor</span><strong>{formatEntryFee(event)}</strong></div>
+              </div>
+            </article>
+            <EventLocationWidget event={event} />
+          </div>
           <aside className="detail-sidebar">
             <div className="panel-card">
               <p className="eyebrow">Cuándo</p>

@@ -35,6 +35,10 @@ type BranchRow = {
   address_line: string | null;
   city: string | null;
   region: string | null;
+  country_code: string | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  timezone: string | null;
   status: BranchSummary["status"];
 };
 
@@ -219,6 +223,11 @@ function mapBranch(row: BranchRow): BranchSummary {
     name: row.name,
     city: row.city ?? "Sin ciudad",
     address: branchAddress(row) || "Dirección por confirmar",
+    region: row.region,
+    countryCode: row.country_code,
+    latitude: row.latitude == null ? null : Number(row.latitude),
+    longitude: row.longitude == null ? null : Number(row.longitude),
+    timezone: row.timezone,
     status: row.status,
   };
 }
@@ -280,6 +289,10 @@ function mapEvent(
     branchName: locationLabel,
     address: branch?.address ?? row.location_text ?? "Dirección por confirmar",
     city: eventCity(row, branch),
+    region: branch?.region ?? row.location_region,
+    countryCode: branch?.countryCode ?? null,
+    latitude: branch?.latitude ?? null,
+    longitude: branch?.longitude ?? null,
     entryFee: entryFee(row.entry_fee_amount, row.entry_fee_currency),
     seriesId: row.event_series_id,
     seriesName: sourceSeries?.title ?? null,
@@ -348,7 +361,7 @@ async function loadAdminData(): Promise<AdminDataSet> {
 
   const { data: branchRows, error: branchError } = await client
     .from("branches")
-    .select("id,store_id,slug,name,address_line,city,region,status")
+    .select("id,store_id,slug,name,address_line,city,region,country_code,latitude,longitude,timezone,status")
     .is("deleted_at", null)
     .order("name");
   if (branchError) throw branchError;

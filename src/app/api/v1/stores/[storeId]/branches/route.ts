@@ -12,7 +12,7 @@ export const POST = route(async (request: NextRequest, context: Context) => {
   const { storeId } = await context.params;
   const input = await parseJson(request, createBranchSchema);
   const service = new DomainCommandService(await createSupabaseServerClient());
-  return ok(await service.execute("create_branch", {
+  return ok(await service.execute("create_active_branch", {
     store_id: uuidSchema.parse(storeId),
     input,
   }), 201);

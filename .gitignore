@@ -9,3 +9,5 @@ npm-debug.log*
 supabase/.branches/
 supabase/.temp/
 supabase/snippets/
+.agents/skills/
+skills-lock.json
