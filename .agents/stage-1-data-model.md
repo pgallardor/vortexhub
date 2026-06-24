@@ -178,6 +178,7 @@ retained permanently.
 | `logo_url` | text nullable | Public optimized logo URL/path |
 | `timezone` | varchar(60) | Valid IANA timezone |
 | `status` | varchar(30) | `pending`, `active`, `suspended`, `closed` |
+| `is_publicly_visible` | boolean | Default true; controls public discovery |
 | `activated_at` | timestamptz nullable | Freezes slug |
 | `closed_at` | timestamptz nullable | |
 | `created_at` | timestamptz | |
@@ -194,6 +195,11 @@ Rules:
 - `suspended` is controlled by `platform_admin` and reversible only by
   `platform_admin`.
 - `closed` is owner-requested, immediate, and terminal during Stage 1.
+- `is_publicly_visible = false` hides an otherwise active store from public
+  directory, public calendar, store calendar, and public event-detail RPCs
+  without suspending store operations.
+- Store-wide owners and admins may toggle public visibility through an audited
+  RPC. Branch-scoped admins and staff cannot hide an entire store.
 - Store closure requires a minimal affected-event preview and a public
   cancellation message. It closes branches, ends active series, cancels future
   published events through a cancellation batch, and disables operational
