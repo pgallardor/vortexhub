@@ -5,6 +5,7 @@ import { AdminEventList } from "@/components/admin/event-list";
 import { AdminStatCard } from "@/components/admin/stat-card";
 import { AdminSeriesList } from "@/components/admin/series-list";
 import { StoreMediaUploader } from "@/components/admin/store-media-uploader";
+import { StoreVisibilityActions } from "@/components/admin/store-visibility-actions";
 import { PageHeader, StatusBadge } from "@/components/frontend";
 import { getAdminStore } from "@/lib/frontend/admin-data";
 
@@ -18,10 +19,15 @@ export default async function AdminStoreDetailPage({ params }: { params: Promise
   return (
     <>
       <PageHeader
-        eyebrow="Tienda activa"
+        eyebrow={store.isPubliclyVisible ? "Tienda activa" : "Tienda oculta"}
         title={store.name}
         description={store.description}
-        action={<StatusBadge status={store.status} />}
+        action={(
+          <div className="status-stack">
+            <StatusBadge status={store.status} />
+            <StatusBadge status={store.isPubliclyVisible ? "Publica" : "Oculta"} />
+          </div>
+        )}
       />
       <div className="stats-grid stats-grid-three">
         <AdminStatCard
@@ -38,6 +44,22 @@ export default async function AdminStoreDetailPage({ params }: { params: Promise
         />
         <AdminStatCard label="Borradores" value={overview.draftEventCount} description="Eventos por publicar" />
       </div>
+      <section className="admin-section">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Visibilidad publica</p>
+            <h2>{store.isPubliclyVisible ? "Aparece en calendarios publicos" : "Oculta del publico"}</h2>
+          </div>
+          <StoreVisibilityActions store={store} />
+        </div>
+        <div className="panel-card">
+          <p>
+            {store.isPubliclyVisible
+              ? "La tienda aparece en el directorio, su calendario publico y el calendario global."
+              : "La tienda sigue operable en administracion, pero no aparece en el directorio ni en calendarios publicos."}
+          </p>
+        </div>
+      </section>
       <section className="admin-section">
         <div className="section-heading">
           <div><p className="eyebrow">Identidad visual</p><h2>Logo de la tienda</h2></div>

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { PageHeader, StatusBadge } from "@/components/frontend";
 import { SeriesForm } from "@/components/series-form";
-import { getAdminSeries, getAdminStore } from "@/lib/frontend/admin-data";
+import { getAdminEventFormOptions, getAdminSeries, getAdminStore } from "@/lib/frontend/admin-data";
 
 export default async function EditSeriesPage({
   params,
@@ -9,9 +9,10 @@ export default async function EditSeriesPage({
   params: Promise<{ storeId: string; seriesId: string }>;
 }) {
   const { storeId, seriesId } = await params;
-  const [workspace, series] = await Promise.all([
+  const [workspace, series, options] = await Promise.all([
     getAdminStore(storeId),
     getAdminSeries(storeId, seriesId),
+    getAdminEventFormOptions(storeId),
   ]);
   if (!workspace || !series) notFound();
 
@@ -23,7 +24,14 @@ export default async function EditSeriesPage({
         description="Los cambios de la plantilla se aplican únicamente a futuras ocurrencias elegibles."
         action={<StatusBadge status={series.status} />}
       />
-      <SeriesForm branches={workspace.branches} series={series} store={workspace.overview.store} />
+      <SeriesForm
+        branches={workspace.branches}
+        customBanners={options.customBanners}
+        games={options.games}
+        platformBanners={options.platformBanners}
+        series={series}
+        store={workspace.overview.store}
+      />
     </>
   );
 }

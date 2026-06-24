@@ -267,7 +267,7 @@ export function mapPublicStoreCalendar(
     .sort((left, right) => left.name.localeCompare(right.name));
 
   return {
-    store: payload.store,
+    store: { ...payload.store, isPubliclyVisible: payload.store.isPubliclyVisible ?? true },
     branches: payload.branches,
     games,
     events,
@@ -292,6 +292,7 @@ export function deriveStoresFromEvents(
           description: catalogStore?.description || `Eventos publicados por ${event.storeName}.`,
           timezone: catalogStore?.timezone ?? event.timezone,
           status: "active",
+          isPubliclyVisible: catalogStore?.isPubliclyVisible ?? true,
           cityLabel: catalogStore?.cityLabel ?? event.city ?? "Online",
           logoUrl: catalogStore?.logoUrl,
         });

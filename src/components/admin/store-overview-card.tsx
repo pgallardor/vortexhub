@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StoreVisibilityActions } from "@/components/admin/store-visibility-actions";
 import { StatusBadge } from "@/components/frontend";
 import type { AdminStoreOverview } from "@/lib/frontend/domain";
 
@@ -12,7 +13,10 @@ export function AdminStoreOverviewCard({ overview }: { overview: AdminStoreOverv
           <span className="eyebrow">{store.cityLabel}</span>
           <h2>{store.name}</h2>
         </div>
-        <StatusBadge status={store.status} />
+        <div className="status-stack">
+          <StatusBadge status={store.status} />
+          <StatusBadge status={store.isPubliclyVisible ? "Publica" : "Oculta"} />
+        </div>
       </div>
       <p>{store.description}</p>
       <div className="admin-card-metrics">
@@ -21,9 +25,12 @@ export function AdminStoreOverviewCard({ overview }: { overview: AdminStoreOverv
         <span><strong>{overview.draftEventCount}</strong> borradores</span>
       </div>
       <div className="admin-card-actions">
-        <Link className="button button-secondary" href={`/stores/${store.slug}`}>
-          Ver calendario
-        </Link>
+        {store.isPubliclyVisible ? (
+          <Link className="button button-secondary" href={`/stores/${store.slug}`}>
+            Ver calendario
+          </Link>
+        ) : null}
+        <StoreVisibilityActions store={store} />
         <Link className="button button-primary" href={`/admin/stores/${store.id}`}>
           Administrar
         </Link>

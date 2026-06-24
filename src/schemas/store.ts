@@ -13,6 +13,10 @@ export const closeResourceSchema = z.object({
   internalReason: z.string().trim().max(2000).nullable().optional(),
 });
 
+export const storeVisibilitySchema = z.object({
+  isPubliclyVisible: z.boolean(),
+});
+
 export const invitationSchema = z
   .object({
     email: z.string().email().max(320),

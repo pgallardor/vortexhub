@@ -17,6 +17,7 @@ export interface StoreSummary {
   description: string;
   timezone: string;
   status: StoreStatus;
+  isPubliclyVisible: boolean;
   cityLabel: string;
   logoUrl?: string;
 }
@@ -84,6 +85,7 @@ export interface EventSeriesSummary {
   title: string;
   description: string;
   game: GameSummary;
+  otherGameName?: string | null;
   formatName: string | null;
   status: EventSeriesStatus;
   weekdays: number[];
@@ -96,10 +98,16 @@ export interface EventSeriesSummary {
   externalRegistrationUrl: string | null;
   locationMode: LocationMode;
   locationLabel: string;
+  locationCity?: string | null;
+  locationRegion?: string | null;
+  locationCountryCode?: string | null;
   entryFee: {
     amount: number;
     currency: string;
   } | null;
+  bannerMode: "platform" | "custom";
+  platformBannerId?: string | null;
+  customBannerAssetId?: string | null;
 }
 
 export interface PublicStoreCalendar {

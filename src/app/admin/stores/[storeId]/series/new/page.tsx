@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/frontend";
 import { SeriesForm } from "@/components/series-form";
-import { getAdminStore } from "@/lib/frontend/admin-data";
+import { getAdminEventFormOptions, getAdminStore } from "@/lib/frontend/admin-data";
 
 export default async function NewSeriesPage({
   params,
@@ -9,7 +9,10 @@ export default async function NewSeriesPage({
   params: Promise<{ storeId: string }>;
 }) {
   const { storeId } = await params;
-  const workspace = await getAdminStore(storeId);
+  const [workspace, options] = await Promise.all([
+    getAdminStore(storeId),
+    getAdminEventFormOptions(storeId),
+  ]);
   if (!workspace) notFound();
   const { store } = workspace.overview;
 
@@ -20,7 +23,13 @@ export default async function NewSeriesPage({
         title="Crear serie semanal"
         description="Define una plantilla recurrente para generar y publicar eventos futuros."
       />
-      <SeriesForm branches={workspace.branches} store={store} />
+      <SeriesForm
+        branches={workspace.branches}
+        customBanners={options.customBanners}
+        games={options.games}
+        platformBanners={options.platformBanners}
+        store={store}
+      />
     </>
   );
 }

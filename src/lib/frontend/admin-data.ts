@@ -25,6 +25,7 @@ type StoreRow = {
   logo_url: string | null;
   timezone: string;
   status: StoreSummary["status"];
+  is_publicly_visible: boolean | null;
 };
 
 type BranchRow = {
@@ -93,6 +94,7 @@ type EventSeriesRow = {
   title: string;
   description: string | null;
   format_name: string | null;
+  other_game_name: string | null;
   status: EventSeriesSummary["status"];
   weekdays: number[];
   local_start_time: string;
@@ -105,9 +107,14 @@ type EventSeriesRow = {
   location_mode: EventSeriesSummary["locationMode"];
   location_text: string | null;
   location_city: string | null;
+  location_region: string | null;
+  location_country_code: string | null;
   entry_fee_amount: number | string | null;
   entry_fee_currency: string | null;
   game_id: string;
+  banner_mode: "platform" | "custom";
+  platform_banner_id: string | null;
+  custom_banner_asset_id: string | null;
 };
 
 type EventRow = {
@@ -210,6 +217,7 @@ function mapStore(row: StoreRow, branches: BranchSummary[]): StoreSummary {
     description: row.description ?? "",
     timezone: row.timezone,
     status: row.status,
+    isPubliclyVisible: row.is_publicly_visible ?? true,
     cityLabel: cityLabelForStore(row.id, branches),
     logoUrl: row.logo_url ?? undefined,
   };
@@ -327,6 +335,7 @@ function mapSeries(
     title: row.title,
     description: row.description ?? "",
     game,
+    otherGameName: row.other_game_name,
     formatName: row.format_name,
     status: row.status,
     weekdays: row.weekdays,
@@ -339,7 +348,13 @@ function mapSeries(
     externalRegistrationUrl: row.external_registration_url,
     locationMode: row.location_mode,
     locationLabel,
+    locationCity: row.location_city,
+    locationRegion: row.location_region,
+    locationCountryCode: row.location_country_code,
     entryFee: entryFee(row.entry_fee_amount, row.entry_fee_currency),
+    bannerMode: row.banner_mode,
+    platformBannerId: row.platform_banner_id,
+    customBannerAssetId: row.custom_banner_asset_id,
   };
 }
 
@@ -370,7 +385,7 @@ async function loadAdminData(): Promise<AdminDataSet> {
 
   const { data: storeRows, error: storeError } = await client
     .from("stores")
-    .select("id,slug,name,description,logo_url,timezone,status")
+    .select("id,slug,name,description,logo_url,timezone,status,is_publicly_visible")
     .is("deleted_at", null)
     .order("name");
   if (storeError) throw storeError;
@@ -398,7 +413,8 @@ async function loadAdminData(): Promise<AdminDataSet> {
       id,slug,store_id,branch_id,title,description,format_name,status,weekdays,
       local_start_time,duration_minutes,timezone,starts_on,ends_on,
       registration_mode,external_registration_url,location_mode,location_text,location_city,
-      entry_fee_amount,entry_fee_currency,game_id
+      location_region,location_country_code,entry_fee_amount,entry_fee_currency,game_id,other_game_name,
+      banner_mode,platform_banner_id,custom_banner_asset_id
     `)
     .in("store_id", storeIds)
     .is("deleted_at", null)

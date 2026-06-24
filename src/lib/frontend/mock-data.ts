@@ -13,6 +13,7 @@ export const stores: StoreSummary[] = [
     description: "Torneos, ligas semanales y comunidad TCG en Madrid.",
     timezone: "Europe/Madrid",
     status: "active",
+    isPubliclyVisible: true,
     cityLabel: "Madrid",
     logoUrl: "/demo/store-logo-placeholder.png",
   },
@@ -23,6 +24,7 @@ export const stores: StoreSummary[] = [
     description: "Eventos casuales y competitivos para todos los niveles.",
     timezone: "Europe/Madrid",
     status: "active",
+    isPubliclyVisible: true,
     cityLabel: "Barcelona",
     logoUrl: "/demo/store-logo-placeholder.png",
   },
@@ -239,6 +241,9 @@ export const eventSeries: EventSeriesSummary[] = [
     locationMode: "branch",
     locationLabel: "Madrid Norte",
     entryFee: { amount: 5, currency: "EUR" },
+    bannerMode: "platform",
+    platformBannerId: null,
+    customBannerAssetId: null,
   },
   {
     id: "series-weekend-league",
@@ -261,6 +266,9 @@ export const eventSeries: EventSeriesSummary[] = [
     locationMode: "branch",
     locationLabel: "Barcelona Centro",
     entryFee: null,
+    bannerMode: "platform",
+    platformBannerId: null,
+    customBannerAssetId: null,
   },
 ];
 

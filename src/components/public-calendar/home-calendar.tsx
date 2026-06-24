@@ -25,19 +25,95 @@ function shiftDateKey(dateKey: string, days: number) {
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
-function isoWeekday(dateKey: string) {
-  const weekday = new Date(`${dateKey}T00:00:00.000Z`).getUTCDay();
-  return weekday === 0 ? 7 : weekday;
+function dateParts(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+
+  return {
+    weekday: new Intl.DateTimeFormat("es-CL", {
+      weekday: "long",
+      timeZone: "UTC",
+    }).format(date),
+    weekdayShort: new Intl.DateTimeFormat("es-CL", {
+      weekday: "short",
+      timeZone: "UTC",
+    }).format(date).replace(".", ""),
+    day: new Intl.DateTimeFormat("es-CL", {
+      day: "2-digit",
+      timeZone: "UTC",
+    }).format(date),
+    month: new Intl.DateTimeFormat("es-CL", {
+      month: "long",
+      timeZone: "UTC",
+    }).format(date),
+    monthShort: new Intl.DateTimeFormat("es-CL", {
+      month: "short",
+      timeZone: "UTC",
+    }).format(date).replace(".", ""),
+  };
 }
 
-function formatDayHeading(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function formatRangeLabel(startDateKey: string, endDateKey: string) {
+  const start = dateParts(startDateKey);
+  const end = dateParts(endDateKey);
+
+  if (start.monthShort === end.monthShort) {
+    return `${Number(start.day)}-${Number(end.day)} ${end.monthShort}`;
+  }
+
+  return `${Number(start.day)} ${start.monthShort} - ${Number(end.day)} ${end.monthShort}`;
+}
+
+function DateRangeText({
+  startDateKey,
+  endDateKey,
+}: {
+  startDateKey: string;
+  endDateKey: string;
+}) {
+  const start = dateParts(startDateKey);
+  const end = dateParts(endDateKey);
+
+  return (
+    <p className="home-date-range" aria-label={`${capitalize(start.weekday)} ${Number(start.day)} de ${start.month} al ${end.weekday} ${Number(end.day)} de ${end.month}.`}>
+      <span className="date-word">{start.weekday}</span>
+      <strong>{Number(start.day)}</strong>
+      <span>{start.month}</span>
+      <span className="date-separator">al</span>
+      <span className="date-word">{end.weekday}</span>
+      <strong>{Number(end.day)}</strong>
+      <span>{end.month}</span>
+    </p>
+  );
+}
+
+function DayHeading({
+  dateKey,
+  eventCount,
+  headingId,
+}: {
+  dateKey: string;
+  eventCount: number;
+  headingId?: string;
+}) {
+  const parts = dateParts(dateKey);
+
+  return (
+    <div className="agenda-day-heading">
+      <div className="agenda-date-heading">
+        <h2 id={headingId}>
+          <span>{parts.weekday}</span>
+          <strong>{Number(parts.day)}</strong>
+          <span>{parts.month}</span>
+        </h2>
+      </div>
+      <span>{eventCountLabel(eventCount)}</span>
+    </div>
+  );
 }
 
 function eventCountLabel(count: number) {
@@ -59,7 +135,7 @@ export function HomeCalendar({
   const games = Array.from(new Map(events.map((event) => [event.game.slug, event.game])).values());
   const cities = Array.from(new Set(events.map((event) => event.city ?? "Online"))).sort();
   const todayKey = dateKeyInTimeZone(referenceDate, discoveryTimeZone);
-  const weekEndKey = shiftDateKey(todayKey, 7 - isoWeekday(todayKey));
+  const rangeEndKey = shiftDateKey(todayKey, 6);
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -69,19 +145,8 @@ export function HomeCalendar({
     });
   }, [events, filters]);
 
-  const todayEvents = filteredEvents.filter(
-    (event) => dateKeyInTimeZone(event.startsAt, discoveryTimeZone) === todayKey,
-  );
-  const weekEvents = filteredEvents.filter((event) => {
-    const dateKey = dateKeyInTimeZone(event.startsAt, discoveryTimeZone);
-    return dateKey > todayKey && dateKey <= weekEndKey;
-  });
-  const laterEvents = filteredEvents.filter((event) => {
-    const dateKey = dateKeyInTimeZone(event.startsAt, discoveryTimeZone);
-    return dateKey > weekEndKey;
-  });
-  const weekGroups = Array.from(
-    weekEvents.reduce((groups, event) => {
+  const eventGroups = Array.from(
+    filteredEvents.reduce((groups, event) => {
       const dateKey = dateKeyInTimeZone(event.startsAt, discoveryTimeZone);
       const group = groups.get(dateKey) ?? [];
       group.push(event);
@@ -89,20 +154,22 @@ export function HomeCalendar({
       return groups;
     }, new Map<string, EventSummary[]>()),
   );
-  const laterGroups = Array.from(
-    laterEvents.reduce((groups, event) => {
-      const dateKey = dateKeyInTimeZone(event.startsAt, discoveryTimeZone);
-      const group = groups.get(dateKey) ?? [];
-      group.push(event);
-      groups.set(dateKey, group);
-      return groups;
-    }, new Map<string, EventSummary[]>()),
-  );
-  const visibleEventCount = todayEvents.length + weekEvents.length + laterEvents.length;
   const clearFilters = () => setFilters(emptyFilters);
 
   return (
     <>
+      <div className="home-agenda-heading">
+        <div>
+          <p className="eyebrow">Calendario publico TCG</p>
+          <h1>Eventos de los proximos 7 dias</h1>
+          <DateRangeText startDateKey={todayKey} endDateKey={rangeEndKey} />
+        </div>
+        <div className="home-agenda-summary">
+          <span className="date-range-pill">{formatRangeLabel(todayKey, rangeEndKey)}</span>
+          <span className="result-count">{eventCountLabel(filteredEvents.length)}</span>
+        </div>
+      </div>
+
       <div className="filter-bar home-filter-bar" aria-label="Filtros del calendario">
         <label className="filter-field">
           <span>Juego</span>
@@ -125,91 +192,32 @@ export function HomeCalendar({
         <button className="button button-secondary" type="button" onClick={clearFilters}>Limpiar</button>
       </div>
 
-      {visibleEventCount ? (
+      {filteredEvents.length ? (
         <div className="home-agenda">
-          <section className="agenda-section" aria-labelledby="today-events-heading">
-            <div className="agenda-section-heading">
-              <div>
-                <p className="eyebrow">Tu agenda inmediata</p>
-                <h2 id="today-events-heading">Eventos de hoy</h2>
-                <p>Todos los eventos publicados para hoy, incluidos los que ocurren en paralelo.</p>
-              </div>
-              <span className="result-count">{eventCountLabel(todayEvents.length)}</span>
+          <section className="agenda-section" aria-labelledby="home-events-heading">
+            <div className="agenda-days">
+              {eventGroups.map(([dateKey, dayEvents]) => (
+                <section className="agenda-day" key={dateKey}>
+                  <DayHeading
+                    dateKey={dateKey}
+                    eventCount={dayEvents.length}
+                    headingId={dateKey === eventGroups[0]?.[0] ? "home-events-heading" : undefined}
+                  />
+                  <div className="agenda-list">
+                    {dayEvents.map((event) => (
+                      <EventAgendaRow event={event} key={event.id} timeZone={discoveryTimeZone} />
+                    ))}
+                  </div>
+                </section>
+              ))}
             </div>
-            {todayEvents.length ? (
-              <div className="agenda-list">
-                {todayEvents.map((event) => (
-                  <EventAgendaRow event={event} key={event.id} timeZone={discoveryTimeZone} />
-                ))}
-              </div>
-            ) : (
-              <div className="agenda-empty">No hay eventos hoy con los filtros seleccionados.</div>
-            )}
           </section>
-
-          <section className="agenda-section" aria-labelledby="week-events-heading">
-            <div className="agenda-section-heading">
-              <div>
-                <p className="eyebrow">Planifica tus próximos días</p>
-                <h2 id="week-events-heading">El resto de esta semana</h2>
-                <p>Eventos desde mañana hasta el domingo, agrupados por día.</p>
-              </div>
-              <span className="result-count">{eventCountLabel(weekEvents.length)}</span>
-            </div>
-            {weekGroups.length ? (
-              <div className="agenda-days">
-                {weekGroups.map(([dateKey, dayEvents]) => (
-                  <section className="agenda-day" key={dateKey}>
-                    <div className="agenda-day-heading">
-                      <h3>{formatDayHeading(dateKey)}</h3>
-                      <span>{eventCountLabel(dayEvents.length)}</span>
-                    </div>
-                    <div className="agenda-list">
-                      {dayEvents.map((event) => (
-                        <EventAgendaRow event={event} key={event.id} timeZone={discoveryTimeZone} />
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            ) : (
-              <div className="agenda-empty">No hay más eventos esta semana con los filtros seleccionados.</div>
-            )}
-          </section>
-
-          {laterGroups.length ? (
-            <section className="agenda-section" aria-labelledby="later-events-heading">
-              <div className="agenda-section-heading">
-                <div>
-                  <p className="eyebrow">Más adelante</p>
-                  <h2 id="later-events-heading">Próximos eventos publicados</h2>
-                  <p>Eventos fuera de esta semana incluidos en el rango público cargado.</p>
-                </div>
-                <span className="result-count">{eventCountLabel(laterEvents.length)}</span>
-              </div>
-              <div className="agenda-days">
-                {laterGroups.map(([dateKey, dayEvents]) => (
-                  <section className="agenda-day" key={dateKey}>
-                    <div className="agenda-day-heading">
-                      <h3>{formatDayHeading(dateKey)}</h3>
-                      <span>{eventCountLabel(dayEvents.length)}</span>
-                    </div>
-                    <div className="agenda-list">
-                      {dayEvents.map((event) => (
-                        <EventAgendaRow event={event} key={event.id} timeZone={discoveryTimeZone} />
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </section>
-          ) : null}
         </div>
       ) : (
         <div className="calendar-results-heading">
           <EmptyState
             onClear={clearFilters}
-            title="No hay eventos hoy ni durante el resto de esta semana"
+            title="No hay eventos en los proximos 7 dias"
             description="Prueba otro juego o ciudad para descubrir eventos publicados."
           />
         </div>
