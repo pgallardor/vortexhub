@@ -6,8 +6,9 @@ Stage 2 activates the first player-facing pilot capabilities after the Stage 1
 publishing foundation:
 
 1. Player identity and personal QR.
-2. Store-scoped prize point ledger.
-3. Location detection and location filtering improvements for expansion beyond
+2. Store-scoped action QR for point grants and redemptions.
+3. Store-scoped prize point ledger.
+4. Location detection and location filtering improvements for expansion beyond
    one city.
 
 This document is a planning and delivery spec. It does not replace the accepted
@@ -22,6 +23,7 @@ Stage 2 may implement:
 - Authenticated player profile onboarding for adult users.
 - Personal player QR display and rotation.
 - Contextual QR resolution for authorized store actions.
+- Short-lived store action QR for point grants and redemptions.
 - Store-scoped point movements using an immutable ledger.
 - Calendar location normalization and opt-in browser location detection.
 - Indexes, read models, or generated columns needed for location filtering at
@@ -41,9 +43,13 @@ Stage 2 must not implement unless separately accepted:
 
 ## Guiding Rules
 
-- QR identifies a player only inside an authenticated and authorized action.
+- Personal QR identifies a player only inside an authenticated and authorized
+  action.
 - A QR scan never grants authorization by itself.
+- Personal player QR and store action QR are separate concepts.
+- Point grant and redemption flows use store-created action QR by default.
 - Stores never create unclaimed or unauthenticated player profiles.
+- Stores must not search the global player directory to grant or redeem points.
 - Points belong to exactly one store. There is no global point balance.
 - Point balances are derived or cached projections of immutable ledger entries.
 - Corrections use compensating ledger entries, never edits to historical
@@ -99,27 +105,112 @@ Important open design decision before implementation:
   material plus a server secret, or storing an encrypted secret with strict key
   handling. Do not silently fall back to plaintext storage.
 
-### Phase 2: Contextual QR Resolution
+### Phase 2: Store Action QR
 
-Implement QR resolution only through explicit contextual actions.
+Implement short-lived action QR for store workflows. For the Stage 2 pilot,
+points should use action QR rather than personal player QR as the primary flow.
 
-Initial contexts:
+Action QR represents one pending store operation, not a player identity. The
+store creates the operation, displays the QR, and the authenticated player scans
+it to confirm that the point movement should be applied to their own player
+profile.
 
-- `player_profile_display`: player views their own QR.
-- `store_point_adjustment`: authorized store operator identifies a player for a
-  point movement.
-- `internal_event_registration`: only if internal registration is activated in
-  the same Stage 2 delivery slice.
+Initial action QR contexts:
 
-Resolution result for store contexts may include only:
+- `point_grant`: store grants points to the scanning player.
+- `point_redemption`: store redeems or subtracts points from the scanning
+  player.
+- `point_correction_acknowledgement`: optional acknowledgement for correction
+  workflows if the pilot requires player visibility.
+
+Required table:
+
+```sql
+point_transaction_intents
+```
+
+Recommended columns:
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | uuid PK | Internal identifier |
+| `store_id` | uuid FK | Required point scope |
+| `branch_id` | uuid nullable | Authorization scope when relevant |
+| `event_id` | uuid nullable | Optional event attribution |
+| `created_by_account_id` | uuid FK | Store operator who created the intent |
+| `created_by_membership_id` | uuid FK | Store authorization used |
+| `type` | varchar(30) | `point_grant`, `point_redemption` |
+| `delta` | integer | Positive for grant, negative for redemption |
+| `reason` | varchar(40) | Structured point reason |
+| `status` | varchar(30) | `pending_player_confirmation`, `completed`, `cancelled`, `expired` |
+| `qr_token_hash` | text | Hash of short-lived opaque action token |
+| `player_profile_id` | uuid nullable | Set only when completed |
+| `idempotency_key` | text nullable | Prevent duplicate creation |
+| `metadata` | jsonb | Allowlisted, non-sensitive details |
+| `expires_at` | timestamptz | Short expiry, recommended 2-5 minutes |
+| `completed_at` | timestamptz nullable | |
+| `cancelled_at` | timestamptz nullable | |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+
+Required behavior:
+
+- The store operator creates an intent after selecting type, amount, reason,
+  optional event, and optional internal note.
+- VortexHub returns a short-lived action QR payload for that intent.
+- The player scans the action QR while authenticated.
+- If the player has no profile, progressive onboarding runs first and then
+  resumes confirmation.
+- The player sees a confirmation screen with store, operation type, points,
+  reason, and event when present.
+- Player acceptance executes one transactional RPC that locks the intent,
+  validates status, expiry, store state, operator authorization, player status,
+  balance rules, and idempotency, then inserts `point_ledger_entries` and marks
+  the intent completed.
+- Cancelling or expiry never writes a point ledger entry.
+- The action QR token is not a UUID and is never stored in plaintext, logged, or
+  written to audit metadata.
+- Action QR scans do not disclose the player's identity to the store until the
+  player confirms.
+- The default point flow does not require the store to search for a player by
+  email, nickname, tag, or internal UUID.
+
+Recommended RPCs:
+
+```text
+create_point_transaction_intent(input jsonb)
+get_point_transaction_intent_for_player(input jsonb)
+confirm_point_transaction_intent(input jsonb)
+cancel_point_transaction_intent(intent_id uuid)
+expire_point_transaction_intents()
+```
+
+Confirmation result for the player may include:
+
+- Store name.
+- Operation type.
+- Point amount.
+- Structured reason.
+- Event title when present.
+- Expiry status.
+
+Confirmation result must not include:
+
+- Store internal notes.
+- Store membership identifiers.
+- Other player balances.
+- QR token hash.
+- Any point history outside the operation being confirmed.
+
+Store operator result after completion may include only:
 
 - Optimized avatar variant when present.
 - Nickname.
 - Player tag.
-- Context-specific current state.
-- Context-specific actions the operator may perform.
+- Store-scoped point summary after the movement.
+- Completed intent status.
 
-Resolution result must not include:
+Store operator result must not include:
 
 - Email.
 - Internal player UUIDs as public navigable identifiers.
@@ -129,9 +220,15 @@ Resolution result must not include:
 - QR secret or token hash.
 - Future point information outside the active store context.
 
-Every QR resolution attempt must write an audit record with an allowlisted
-metadata shape. Audit metadata must never include QR secrets, QR hashes,
-authentication tokens, email addresses, or unnecessary personal data.
+Every action QR creation, scan, confirmation, cancellation, expiry, denial, and
+failure must write an audit record with an allowlisted metadata shape. Audit
+metadata must never include QR secrets, QR hashes, authentication tokens, email
+addresses, or unnecessary personal data.
+
+Personal player QR remains available for future flows where the player must be
+identified directly, such as internal registration, check-in, or store-assisted
+support. Personal QR is not the default mechanism for point grants or
+redemptions in the Stage 2 pilot.
 
 ### Phase 3: Store-Scoped Prize Points
 
@@ -153,6 +250,7 @@ Recommended columns:
 | `player_profile_id` | uuid FK | Required target player |
 | `delta` | integer | Non-zero; positive grant or negative correction/spend |
 | `reason` | varchar(40) | Structured reason |
+| `intent_id` | uuid nullable | Completed action intent that produced this movement |
 | `event_id` | uuid nullable | Optional event attribution |
 | `event_attendance_id` | uuid nullable | Future only; do not create until attendance exists |
 | `actor_account_id` | uuid FK | Operator or system actor |
@@ -172,9 +270,13 @@ Allowed initial reasons:
 
 Required behavior:
 
-- Owners and admins may grant or correct points within store scope.
-- Staff may grant points only if explicitly enabled for the pilot store or
-  separately accepted as Stage 2 scope.
+- Owners and admins may create point grant and redemption intents within store
+  scope.
+- Staff may create point grant and redemption intents only if explicitly enabled
+  for the pilot store or separately accepted as Stage 2 scope.
+- Owners and admins may create manual administrative adjustments without player
+  confirmation when the reason is correction, pilot import, or operational
+  cleanup.
 - Point grants may optionally reference an event owned by the same store.
 - Corrections must reference the reason and may include a brief internal note.
 - A negative movement must not make the derived balance negative unless an
@@ -189,6 +291,11 @@ record_store_point_movement(input jsonb)
 get_store_player_point_summary(input jsonb)
 list_store_point_ledger(input jsonb)
 ```
+
+`record_store_point_movement` is for administrative adjustments and migration
+or import workflows. Normal player-facing grant and redemption flows use
+`confirm_point_transaction_intent`, which inserts the ledger entry inside the
+same transaction that completes the intent.
 
 Balance strategy:
 
@@ -295,8 +402,13 @@ Recommended client access:
 - Players may read and update only their own player profile fields allowed by
   product rules.
 - Players may read only their own active QR display payload through RPC.
+- Players may read and confirm only pending action intents through the action QR
+  token they scanned.
 - Store operators cannot browse player profiles.
-- Store operators can resolve a QR only inside an authorized contextual RPC.
+- Store operators can create and inspect action intents only within authorized
+  store scope.
+- Store operators can resolve a personal player QR only inside an authorized
+  contextual RPC when that future flow explicitly requires it.
 - Store operators can read point summaries and ledger rows only for their own
   active store scope.
 - Public visitors can read only normalized public discovery locations and
@@ -305,6 +417,7 @@ Recommended client access:
 Use RPCs for:
 
 - QR creation, rotation, and resolution.
+- Action QR intent creation, confirmation, cancellation, and expiry.
 - Point ledger writes.
 - Any multi-row update involving player profile onboarding and QR credential
   creation.
@@ -346,8 +459,26 @@ create index point_ledger_store_event_idx
 on point_ledger_entries (store_id, event_id)
 where event_id is not null;
 
+create unique index point_ledger_intent_uq
+on point_ledger_entries (intent_id)
+where intent_id is not null;
+
 create unique index point_ledger_idempotency_uq
 on point_ledger_entries (store_id, idempotency_key)
+where idempotency_key is not null;
+
+create unique index point_transaction_intents_qr_token_hash_uq
+on point_transaction_intents (qr_token_hash);
+
+create index point_transaction_intents_store_status_idx
+on point_transaction_intents (store_id, status, created_at desc);
+
+create index point_transaction_intents_expiry_idx
+on point_transaction_intents (expires_at)
+where status = 'pending_player_confirmation';
+
+create unique index point_transaction_intents_idempotency_uq
+on point_transaction_intents (store_id, idempotency_key)
 where idempotency_key is not null;
 
 create unique index discovery_locations_slug_uq
@@ -376,12 +507,18 @@ Player UI:
 - Replace `/player/qr` later-stage notice with QR display, rotation, and safe
   copy explaining that QR is identification only.
 - Add loading, empty, revoked, and rotation-rate-limited states.
+- Add an action QR scanner or scanned action route.
+- Show pending point grant/redemption details before confirmation.
+- Require explicit player acceptance before writing ledger entries.
+- Show success, expired, cancelled, denied, and already-completed states.
 
 Store UI:
 
-- Add a contextual QR scan entry point only inside authorized store workflows.
-- Add a store point adjustment flow that identifies the player by QR scan.
-- Add store-scoped player point summary after scan.
+- Add a point grant/redemption flow that creates an action QR intent.
+- Show the generated action QR with expiry and cancel controls.
+- After player confirmation, show completed status and store-scoped player
+  point summary.
+- Add a separate administrative adjustment flow for owners/admins.
 - Add store point ledger history for owners/admins.
 
 Public calendar UI:
@@ -403,8 +540,13 @@ GET  /api/v1/player/me
 POST /api/v1/player/me
 GET  /api/v1/player/qr
 POST /api/v1/player/qr/rotate
-POST /api/v1/stores/{storeId}/qr/resolve
-POST /api/v1/stores/{storeId}/points
+POST /api/v1/stores/{storeId}/player-qr/resolve
+POST /api/v1/stores/{storeId}/point-intents
+GET  /api/v1/stores/{storeId}/point-intents/{intentId}
+POST /api/v1/stores/{storeId}/point-intents/{intentId}/cancel
+GET  /api/v1/player/point-intents/{token}
+POST /api/v1/player/point-intents/{token}/confirm
+POST /api/v1/stores/{storeId}/points/adjustments
 GET  /api/v1/stores/{storeId}/points
 GET  /api/v1/public/locations
 GET  /api/v1/public/locations/nearest
@@ -422,8 +564,14 @@ Audit these actions:
 - QR credential rotation.
 - QR credential revocation.
 - QR resolution succeeded, denied, and failed.
-- Point movement created.
-- Point correction created.
+- Point action intent created.
+- Point action intent scanned.
+- Point action intent confirmed.
+- Point action intent cancelled.
+- Point action intent expired.
+- Point action intent denied or failed.
+- Point ledger movement created.
+- Manual point correction created.
 - Sensitive point or player disclosure denied.
 
 Audit records must use stable action names and allowlisted metadata. Never
@@ -438,17 +586,27 @@ Stage 2 is acceptable when:
 2. A player can display and rotate a QR without exposing internal UUIDs.
 3. A revoked or rotated QR no longer resolves.
 4. A store operator cannot resolve a QR outside an authorized store context.
-5. QR resolution returns only minimum context-specific player data.
-6. Every QR resolution attempt creates an audit record without QR secret/hash.
-7. A store owner/admin can add a point movement for a scanned player.
-8. Point balances are derived from ledger entries and are isolated per store.
-9. Corrections create compensating entries instead of editing history.
-10. Public visitors cannot see player identities or point balances.
-11. Calendar filtering still works by game, date, store, and location.
-12. Online events remain available under the `Online` location filter.
-13. Browser location permission is optional and never required for discovery.
-14. RLS tests cover visitor, player, owner, admin, staff, and unrelated store.
-15. Representative calendar and point queries have indexes verified with
+5. A store operator can create a point grant action QR without selecting a
+   global player record.
+6. A player can scan an action QR, review the operation, and explicitly confirm
+   or decline.
+7. Confirming an action QR writes the ledger entry and completes the intent in
+   one transaction.
+8. Expired, cancelled, already-completed, or replayed action QR tokens do not
+   create duplicate ledger entries.
+9. Action QR confirmation reveals only minimum context-specific player data to
+   the store.
+10. Every action QR attempt creates an audit record without QR secret/hash.
+11. A store owner/admin can create manual point corrections through an audited
+   administrative adjustment flow.
+12. Point balances are derived from ledger entries and are isolated per store.
+13. Corrections create compensating entries instead of editing history.
+14. Public visitors cannot see player identities or point balances.
+15. Calendar filtering still works by game, date, store, and location.
+16. Online events remain available under the `Online` location filter.
+17. Browser location permission is optional and never required for discovery.
+18. RLS tests cover visitor, player, owner, admin, staff, and unrelated store.
+19. Representative calendar and point queries have indexes verified with
     `EXPLAIN`.
 
 ## Implementation Notes
