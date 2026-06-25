@@ -96,6 +96,12 @@ p { color: var(--muted); line-height: 1.65; }
 .form-grid { display: grid; gap: 1rem; }
 .form-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .form-helper { margin: -.25rem 0 .2rem; font-size: .82rem; }
+.password-strength { display: grid; gap: .45rem; margin-top: -.35rem; color: var(--muted); font-size: .78rem; font-weight: 800; }
+.password-strength div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; }
+.password-strength i { height: 5px; border-radius: 999px; background: #2b3545; }
+.password-strength i.active { background: var(--danger); }
+.password-strength.strength-2 i.active, .password-strength.strength-3 i.active { background: #ffd27a; }
+.password-strength.strength-4 i.active { background: var(--success); }
 .button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: .65rem 1rem; border: 1px solid transparent; border-radius: 9px; font-weight: 800; transition: transform .18s ease, filter .18s ease, border-color .18s ease; }
 .button-primary { color: #08101b; background: var(--primary); }
 .button-secondary { border-color: var(--border); background: var(--surface); }

@@ -10,9 +10,9 @@ function safeRedirectTo(value: string | undefined) {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirectTo?: string }>;
+  searchParams: Promise<{ message?: string; redirectTo?: string }>;
 }) {
-  const { redirectTo: redirectToParam } = await searchParams;
+  const { message, redirectTo: redirectToParam } = await searchParams;
   const redirectTo = safeRedirectTo(redirectToParam);
 
   return (
@@ -22,6 +22,7 @@ export default async function LoginPage({
         <p className="eyebrow">Acceso para tiendas</p>
         <h1>Vuelve a tu panel</h1>
         <p>Administra calendarios, eventos y sucursales desde un solo lugar.</p>
+        {message ? <p className="form-error" role="alert">{message}</p> : null}
         <LoginForm redirectTo={redirectTo} />
         <div className="auth-footer">
           <p>¿No tienes cuenta? <Link className="text-link" href="/auth/register">Registrar una tienda</Link></p>

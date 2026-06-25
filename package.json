@@ -8,10 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "supabase:start": "supabase start",
+    "supabase:start": "node scripts/prepare-local-email-template.mjs && supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "supabase:reset": "supabase db reset"
+    "supabase:reset": "supabase db reset",
+    "onboard:store-owner": "node -- scripts/invite-store-owner.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
