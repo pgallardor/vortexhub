@@ -1,11 +1,11 @@
 "use client";
 
 import { FeedbackState } from "@/components/feedback-state";
-import { PublicShell } from "@/components/frontend";
+import { PublicShellStatic } from "@/components/public-shell-static";
 
 export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <PublicShell>
+    <PublicShellStatic>
       <main className="page-container route-state-page">
         <FeedbackState
           eyebrow="No pudimos cargar esta vista"
@@ -14,6 +14,6 @@ export default function ErrorPage({ reset }: { error: Error & { digest?: string 
           action={<button className="button button-primary" type="button" onClick={reset}>Intentar de nuevo</button>}
         />
       </main>
-    </PublicShell>
+    </PublicShellStatic>
   );
 }

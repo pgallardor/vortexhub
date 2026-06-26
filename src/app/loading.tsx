@@ -1,5 +1,5 @@
 import { LoadingState } from "@/components/loading-state";
-import { PublicShell } from "@/components/frontend";
+import { PublicShell } from "@/components/public-shell";
 
 export default function Loading() {
   return (

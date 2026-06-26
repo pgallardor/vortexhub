@@ -1,5 +1,5 @@
 import { BackToCalendarAction, FeedbackState } from "@/components/feedback-state";
-import { PublicShell } from "@/components/frontend";
+import { PublicShell } from "@/components/public-shell";
 
 export default function NotFoundPage() {
   return (

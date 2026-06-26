@@ -245,7 +245,7 @@ otp_expiry = 3600
 
 # Uncomment to customize email template
 [auth.email.template.invite]
-subject = "Bienvenida a VortexHub"
+subject = "Bienvenido a VortexHub"
 content_path = "/private/tmp/vortexhub-email-templates/invite.html"
 
 # Uncomment to customize notification email template

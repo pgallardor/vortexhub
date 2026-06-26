@@ -1,4 +1,4 @@
-import { PublicShell } from "@/components/frontend";
+import { PublicShell } from "@/components/public-shell";
 import { HomeCalendar } from "@/components/public-calendar/home-calendar";
 import {
   mapPublicCalendarItem,

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { PublicShell } from "@/components/frontend";
+import { PublicShell } from "@/components/public-shell";
 import { StoreCalendar } from "@/components/public-calendar/store-calendar";
 import { StoreHeader } from "@/components/public-calendar/store-header";
 import { getPublicStoreCalendar } from "@/lib/frontend/public-store-calendar";

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader, PublicShell } from "@/components/frontend";
+import { PageHeader } from "@/components/frontend";
+import { PublicShell } from "@/components/public-shell";
 import { StoreDirectory } from "@/components/store-directory";
 import type { StoreSummary } from "@/lib/frontend/domain";
 import { createSupabaseServerClient } from "@/lib/supabase/server";

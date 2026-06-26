@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
-import { PublicShell, StatusBadge } from "@/components/frontend";
+import { StatusBadge } from "@/components/frontend";
+import { PublicShell } from "@/components/public-shell";
 import {
   mapPublicEventDetail,
   type PublicEventDetail,

@@ -2,7 +2,7 @@ insert into public.legal_document_versions (
   document_key, version, content, content_hash, is_current, published_at
 ) values (
   'minimum_age_declaration',
-  '2026-06-26',
+  '2026-06-26-clean',
   'Declaro que tengo al menos 18 años y entiendo que esta declaración es necesaria para crear y operar una cuenta de tienda en VortexHub.',
   encode(extensions.digest(
     'Declaro que tengo al menos 18 años y entiendo que esta declaración es necesaria para crear y operar una cuenta de tienda en VortexHub.',

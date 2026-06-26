@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { InviteSessionBridge } from "@/components/auth/invite-session-bridge";
+import { LegalAcceptanceForm } from "@/components/auth/legal-acceptance-form";
 import { StoreOwnerOnboardingForm } from "@/components/auth/store-owner-onboarding-form";
 import { Brand } from "@/components/frontend";
+import { hasCurrentMinimumAgeAcceptance } from "@/lib/auth/account-requirements";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type LegalDocumentRow = {
@@ -15,7 +17,18 @@ type AccountRow = {
   status: string;
 };
 
-export default async function StoreOwnerOnboardingPage() {
+function safeRedirectTo(value: string | undefined) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/admin/stores/new";
+  return value;
+}
+
+export default async function StoreOwnerOnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirectTo?: string }>;
+}) {
+  const { redirectTo: redirectToParam } = await searchParams;
+  const redirectTo = safeRedirectTo(redirectToParam);
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -43,8 +56,6 @@ export default async function StoreOwnerOnboardingPage() {
     .eq("id", user.id)
     .maybeSingle<AccountRow>();
 
-  if (account?.status === "active") redirect("/admin/stores/new");
-
   const { data: legalDocument, error: legalError } = await supabase
     .from("legal_document_versions")
     .select("id, version, content")
@@ -55,6 +66,26 @@ export default async function StoreOwnerOnboardingPage() {
 
   if (legalError || !legalDocument) {
     throw new Error("No hay una declaración legal vigente configurada.");
+  }
+
+  const hasCurrentLegalAcceptance = await hasCurrentMinimumAgeAcceptance(supabase, user.id);
+  if (account?.status === "active" && hasCurrentLegalAcceptance) redirect(redirectTo);
+
+  if (account?.status === "active") {
+    return (
+      <main className="auth-page">
+        <section className="form-card auth-card">
+          <Brand />
+          <p className="eyebrow">Declaración vigente</p>
+          <h1>Actualiza tu acceso</h1>
+          <p>Acepta la declaración de mayoría de edad vigente para volver al panel de administración.</p>
+          <LegalAcceptanceForm legalDocument={legalDocument} redirectTo={redirectTo} />
+          <div className="auth-footer">
+            <Link className="text-link" href="/">← Volver al calendario</Link>
+          </div>
+        </section>
+      </main>
+    );
   }
 
   return (

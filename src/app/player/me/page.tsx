@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PublicShell } from "@/components/frontend";
+import { PublicShell } from "@/components/public-shell";
 import { PlayerLaunchInterestForm } from "@/components/player-launch-interest-form";
 
 export default function PlayerProfilePage() {

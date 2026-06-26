@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { PublicNavigation } from "@/components/public-navigation";
 import type { StoreSummary } from "@/lib/frontend/domain";
 
 export function Brand() {
@@ -18,30 +17,6 @@ export function Brand() {
       />
       <span>VORTEXHUB</span>
     </Link>
-  );
-}
-
-export function PublicShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="site-shell">
-      <header className="public-header">
-        <div className="page-container header-inner">
-          <Brand />
-          <PublicNavigation />
-          <div className="header-actions">
-            <Link className="text-link" href="/auth/login">Acceso tiendas</Link>
-            <Link className="button button-secondary" href="/admin">Administrar tienda</Link>
-          </div>
-        </div>
-      </header>
-      <div className="site-content">{children}</div>
-      <footer className="public-footer">
-        <div className="page-container footer-inner">
-          <Brand />
-          <span>Calendarios compartibles para comunidades TCG.</span>
-        </div>
-      </footer>
-    </div>
   );
 }
 
