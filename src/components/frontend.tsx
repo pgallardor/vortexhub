@@ -124,10 +124,10 @@ export function LaterStageNotice({ feature }: { feature: string }) {
   return (
     <section className="notice-card">
       <span className="eyebrow">Experiencia de jugador</span>
-      <h1>{feature} llegará después del calendario público</h1>
+      <h1>{feature} estará disponible próximamente</h1>
       <p>
-        Primero estamos ayudando a las tiendas a publicar eventos fáciles de descubrir. La identidad
-        de jugador y el QR personal se habilitarán en una siguiente etapa.
+        Estamos preparando la identidad de jugador y el QR personal para que puedas usarlos en
+        eventos sin crear perfiles públicos ni compartir datos innecesarios.
       </p>
       <div className="button-row">
         <Link className="button button-primary" href="/#events">Explorar eventos</Link>

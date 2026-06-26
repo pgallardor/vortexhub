@@ -543,7 +543,7 @@ export function EventForm({
         </div>
       ) : null}
       <div className="form-grid two">
-        <Field label="Modo de registro" hint="Stage 1 permite deshabilitado o externo.">
+        <Field label="Modo de registro" hint="Puedes deshabilitar el registro o enlazar una inscripción externa.">
           <select
             onChange={(changeEvent) => setRegistrationMode(changeEvent.target.value as RegistrationMode)}
             value={registrationMode}

@@ -16,6 +16,32 @@ Stage 1 physical schema in `.agents/stage-1-data-model.md`. Stage 2 migrations
 must preserve Stage 1 behavior and follow the accepted architecture decisions in
 `.agents/architecture-decisions.md`.
 
+## Pre-Stage 2 Demo Hook
+
+Before implementing player identity, the public player tab may capture minimal
+launch interest for demo and pilot follow-up.
+
+This pre-stage may implement:
+
+- A public player-facing information page.
+- A minimal email interest list for people who explicitly request one launch
+  reminder.
+- No automatic email delivery during signup, so Resend limits are not consumed
+  by demo traffic.
+
+This pre-stage must not implement:
+
+- Player profiles, tags, avatars, or QR credentials.
+- Internal event registration or capacity.
+- Public player lookup or public player profiles.
+- Store-created guest players.
+- Any store access to the launch-interest list.
+
+Launch-interest records are not player identities and must not be used as
+authorization, registration, attendance, or QR evidence. Sending the eventual
+launch reminder should happen manually or through an explicitly rate-limited
+batch process that respects the active email provider limits and consent.
+
 ## Product Boundary
 
 Stage 2 may implement:

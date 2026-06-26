@@ -43,7 +43,6 @@ export function AdminShell({
         <form action="/auth/logout" method="post" className="admin-logout-form">
           <button className="admin-logout-button" type="submit">Cerrar sesión</button>
         </form>
-        <div className="stage-chip">MVP Stage 1 · Publicación</div>
       </aside>
       <div className="admin-main">
         <header className="admin-mobile-header">

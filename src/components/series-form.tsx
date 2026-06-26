@@ -480,7 +480,7 @@ export function SeriesForm({
           </Field>
         </div>
         <div className="form-grid two">
-          <Field label="Modo de registro" hint="Stage 1 permite deshabilitado o externo.">
+          <Field label="Modo de registro" hint="Puedes deshabilitar el registro o enlazar una inscripción externa.">
             <select value={registrationMode} onChange={(event) => setRegistrationMode(event.target.value as RegistrationMode)}>
               <option value="disabled">Deshabilitado</option>
               <option value="external">Externo</option>
