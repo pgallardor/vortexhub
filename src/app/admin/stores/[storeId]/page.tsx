@@ -4,6 +4,7 @@ import { AdminBranchList } from "@/components/admin/branch-list";
 import { AdminEventList } from "@/components/admin/event-list";
 import { AdminStatCard } from "@/components/admin/stat-card";
 import { AdminSeriesList } from "@/components/admin/series-list";
+import { StoreActivationActions } from "@/components/admin/store-activation-actions";
 import { StoreMediaUploader } from "@/components/admin/store-media-uploader";
 import { StoreVisibilityActions } from "@/components/admin/store-visibility-actions";
 import { PageHeader, StatusBadge } from "@/components/frontend";
@@ -15,17 +16,24 @@ export default async function AdminStoreDetailPage({ params }: { params: Promise
   if (!workspace) notFound();
   const { overview, branches, events, series } = workspace;
   const { store } = overview;
+  const headerEyebrow = store.status === "pending"
+    ? "Tienda pendiente"
+    : store.isPubliclyVisible ? "Tienda activa" : "Tienda oculta";
+  const canManagePublicVisibility = store.status === "active";
+  const publicStatus = canManagePublicVisibility
+    ? store.isPubliclyVisible ? "Publica" : "Oculta"
+    : "Sin publicar";
 
   return (
     <>
       <PageHeader
-        eyebrow={store.isPubliclyVisible ? "Tienda activa" : "Tienda oculta"}
+        eyebrow={headerEyebrow}
         title={store.name}
         description={store.description}
         action={(
           <div className="status-stack">
             <StatusBadge status={store.status} />
-            <StatusBadge status={store.isPubliclyVisible ? "Publica" : "Oculta"} />
+            <StatusBadge status={publicStatus} />
           </div>
         )}
       />
@@ -44,17 +52,38 @@ export default async function AdminStoreDetailPage({ params }: { params: Promise
         />
         <AdminStatCard label="Borradores" value={overview.draftEventCount} description="Eventos por publicar" />
       </div>
+      {store.status === "pending" ? (
+        <section className="admin-section">
+          <div className="pending-store-callout">
+            <div>
+              <p className="eyebrow">Activacion requerida</p>
+              <h2>Publica la tienda antes de compartir sus eventos</h2>
+              <p>
+                Puedes preparar eventos, series, logo y sucursales mientras la tienda esta pendiente. Al activarla,
+                sus eventos publicados aparecen en el calendario publico cuando la visibilidad esta habilitada.
+              </p>
+            </div>
+            <StoreActivationActions store={store} />
+          </div>
+        </section>
+      ) : null}
       <section className="admin-section">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Visibilidad publica</p>
-            <h2>{store.isPubliclyVisible ? "Aparece en calendarios publicos" : "Oculta del publico"}</h2>
+            <h2>
+              {store.status === "pending"
+                ? "Disponible despues de activar"
+                : store.isPubliclyVisible ? "Aparece en calendarios publicos" : "Oculta del publico"}
+            </h2>
           </div>
-          <StoreVisibilityActions store={store} />
+          {canManagePublicVisibility ? <StoreVisibilityActions store={store} /> : null}
         </div>
         <div className="panel-card">
           <p>
-            {store.isPubliclyVisible
+            {store.status === "pending"
+              ? "La tienda aun no aparece en el directorio, en su calendario publico ni en el calendario global. Activa la tienda para habilitar esas superficies."
+              : store.isPubliclyVisible
               ? "La tienda aparece en el directorio, su calendario publico y el calendario global."
               : "La tienda sigue operable en administracion, pero no aparece en el directorio ni en calendarios publicos."}
           </p>

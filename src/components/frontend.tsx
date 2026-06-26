@@ -107,6 +107,7 @@ const statusPresentation: Record<string, { label: string; tone: string }> = {
   ended: { label: "Finalizada", tone: "neutral" },
   publica: { label: "Publica", tone: "success" },
   oculta: { label: "Oculta", tone: "warning" },
+  "sin publicar": { label: "Sin publicar", tone: "warning" },
 };
 
 export function StatusBadge({ status }: { status: string }) {

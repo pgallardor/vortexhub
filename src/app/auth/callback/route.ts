@@ -2,16 +2,28 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+function requestOrigin(request: NextRequest) {
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = forwardedHost ?? request.headers.get("host");
+
+  if (!host) return request.nextUrl.origin;
+
+  const protocol = forwardedProto ?? request.nextUrl.protocol.replace(/:$/, "");
+  return `${protocol}://${host}`;
+}
+
 function safeRedirect(request: NextRequest) {
-  const fallback = new URL("/auth/onboarding", request.url);
+  const origin = requestOrigin(request);
+  const fallback = new URL("/auth/onboarding", origin);
   const redirectTo = request.nextUrl.searchParams.get("redirect_to")
     ?? request.nextUrl.searchParams.get("next");
 
   if (!redirectTo) return fallback;
 
   try {
-    const parsed = new URL(redirectTo, request.url);
-    if (parsed.origin !== request.nextUrl.origin) return fallback;
+    const parsed = new URL(redirectTo, origin);
+    if (parsed.origin !== origin) return fallback;
     return parsed;
   } catch {
     return fallback;

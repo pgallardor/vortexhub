@@ -179,9 +179,9 @@ p { color: var(--muted); line-height: 1.65; }
 .status-danger { color: var(--danger); border-color: #ff7c8c44; background: #ff7c8c12; }
 .status-neutral { color: #aab5c6; border-color: #94a1b544; background: #94a1b512; }
 .status-info { color: #9ec9ff; border-color: #67a9ff44; background: #67a9ff12; }
-.status-stack, .store-visibility-actions { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; justify-content: flex-end; }
-.store-visibility-actions { justify-content: flex-start; }
-.store-visibility-actions .form-error { flex-basis: 100%; }
+.status-stack, .store-visibility-actions, .store-lifecycle-actions { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; justify-content: flex-end; }
+.store-visibility-actions, .store-lifecycle-actions { justify-content: flex-start; }
+.store-visibility-actions .form-error, .store-lifecycle-actions .form-error { flex-basis: 100%; }
 .store-card { min-height: 220px; display: flex; flex-direction: column; }
 .store-card .text-link { margin-top: auto; }
 .store-card-heading { display: flex; align-items: flex-start; gap: 1rem; }
@@ -509,11 +509,15 @@ p { color: var(--muted); line-height: 1.65; }
 .admin-series-card > p { margin-bottom: 1.1rem; }
 .admin-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .admin-card-heading h2 { margin-bottom: 0; }
+.admin-card-note { margin-bottom: 1rem; color: #ffd27a; font-size: .82rem; font-weight: 750; }
 .admin-card-metrics { display: flex; flex-wrap: wrap; gap: .55rem; margin: auto 0 1rem; }
 .admin-card-metrics span { padding: .45rem .6rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: .72rem; }
 .admin-card-metrics strong { color: var(--foreground); }
 .admin-card-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: auto; }
 .admin-series-card .admin-card-actions { margin-top: .35rem; }
+.pending-store-callout { display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; padding: 1.25rem; border: 1px solid #ffc36155; border-radius: var(--radius); background: linear-gradient(135deg, #ffc36118, #111722 64%); }
+.pending-store-callout h2 { margin-bottom: .35rem; font-size: 1.35rem; }
+.pending-store-callout p:last-child { margin-bottom: 0; }
 .series-facts { display: grid; gap: .55rem; margin: 0 0 1.2rem; }
 .series-facts div { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: .7rem; font-size: .76rem; }
 .series-facts dt { color: var(--muted); }
