@@ -19,5 +19,9 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   const stores = await getAdminStores();
   const defaultStoreId = stores[0]?.store.id;
 
-  return <AdminShell defaultStoreId={defaultStoreId}>{children}</AdminShell>;
+  return (
+    <AdminShell defaultStoreId={defaultStoreId} stores={stores.map((overview) => overview.store)}>
+      {children}
+    </AdminShell>
+  );
 }

@@ -2,43 +2,115 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
-import { Brand } from "@/components/frontend";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Brand, StatusBadge } from "@/components/frontend";
+import type { StoreSummary } from "@/lib/frontend/domain";
 
 function navClassName(pathname: string, href: string) {
   return pathname === href ? "active" : undefined;
 }
 
+function storeInitial(name: string) {
+  return name.trim().charAt(0).toUpperCase() || "T";
+}
+
+function StoreMark({ store }: { store: StoreSummary }) {
+  return store.logoUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img alt="" src={store.logoUrl} />
+  ) : (
+    <span>{storeInitial(store.name)}</span>
+  );
+}
+
 export function AdminShell({
   children,
   defaultStoreId,
+  stores = [],
 }: {
   children: ReactNode;
   defaultStoreId?: string;
+  stores?: StoreSummary[];
 }) {
   const pathname = usePathname();
   const storeId = pathname.match(/^\/admin\/stores\/([^/]+)/)?.[1] ?? defaultStoreId;
   const isCalendarRoute = pathname.startsWith(`/admin/stores/${storeId}/calendar`);
   const hasStore = Boolean(storeId);
+  const activeStore = stores.find((store) => store.id === storeId);
+  const [isStoreMenuOpen, setIsStoreMenuOpen] = useState(false);
+  const storeSwitcherRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!storeSwitcherRef.current?.contains(event.target as Node)) {
+        setIsStoreMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    setIsStoreMenuOpen(false);
+  }, [pathname]);
 
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <Brand />
-        <p className="eyebrow">Administración</p>
+        {activeStore ? (
+          <div className={`admin-store-switcher${isStoreMenuOpen ? " open" : ""}`} ref={storeSwitcherRef}>
+            <button
+              aria-expanded={isStoreMenuOpen}
+              aria-haspopup="menu"
+              onClick={() => setIsStoreMenuOpen((current) => !current)}
+              type="button"
+            >
+              <span className="admin-store-mark"><StoreMark store={activeStore} /></span>
+              <span className="admin-store-switcher-copy">
+                <strong>{activeStore.name}</strong>
+                <small>{activeStore.cityLabel}</small>
+              </span>
+            </button>
+            {isStoreMenuOpen ? (
+              <div className="admin-store-menu" role="menu">
+                {stores.map((store) => (
+                  <Link
+                    className={store.id === activeStore.id ? "selected" : undefined}
+                    href={`/admin/stores/${store.id}`}
+                    key={store.id}
+                    role="menuitem"
+                  >
+                    <span className="admin-store-mark"><StoreMark store={store} /></span>
+                    <span className="admin-store-option-copy">
+                      <strong>{store.name}</strong>
+                      <small>{store.cityLabel}</small>
+                    </span>
+                    <StatusBadge status={store.status} />
+                  </Link>
+                ))}
+                <Link className="admin-store-menu-footer" href="/admin/stores" role="menuitem">Ver todas las tiendas</Link>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         <nav className="admin-nav" aria-label="Navegación administrativa">
-          <Link className={navClassName(pathname, "/admin")} href="/admin">Resumen</Link>
-          <Link className={navClassName(pathname, "/admin/stores")} href="/admin/stores">Mis tiendas</Link>
           {hasStore ? (
             <>
-              <Link className={navClassName(pathname, `/admin/stores/${storeId}`)} href={`/admin/stores/${storeId}`}>Tienda activa</Link>
-              <Link className={navClassName(pathname, `/admin/stores/${storeId}/branches`)} href={`/admin/stores/${storeId}/branches`}>Sucursales</Link>
+              <Link className={navClassName(pathname, `/admin/stores/${storeId}`)} href={`/admin/stores/${storeId}`}>Vista general</Link>
               <Link className={pathname.startsWith(`/admin/stores/${storeId}/calendar`) ? "active" : undefined} href={`/admin/stores/${storeId}/calendar`}>Calendario</Link>
               <Link className={pathname.startsWith(`/admin/stores/${storeId}/events`) ? "active" : undefined} href={`/admin/stores/${storeId}/events`}>Eventos</Link>
-              <Link className={pathname.startsWith(`/admin/stores/${storeId}/banners`) ? "active" : undefined} href={`/admin/stores/${storeId}/banners`}>Banners</Link>
               <Link className={pathname.startsWith(`/admin/stores/${storeId}/series`) ? "active" : undefined} href={`/admin/stores/${storeId}/series`}>Series</Link>
+              <Link className={navClassName(pathname, `/admin/stores/${storeId}/branches`)} href={`/admin/stores/${storeId}/branches`}>Sucursales</Link>
+              <Link className={pathname.startsWith(`/admin/stores/${storeId}/banners`) ? "active" : undefined} href={`/admin/stores/${storeId}/banners`}>Banners</Link>
             </>
-          ) : null}
+          ) : (
+            <>
+              <Link className={navClassName(pathname, "/admin/stores")} href="/admin/stores">Mis tiendas</Link>
+              <Link className={navClassName(pathname, "/admin")} href="/admin">Panel global</Link>
+            </>
+          )}
         </nav>
         <form action="/auth/logout" method="post" className="admin-logout-form">
           <button className="admin-logout-button" type="submit">Cerrar sesión</button>
@@ -53,17 +125,22 @@ export function AdminShell({
             </form>
           </div>
           <nav className="admin-mobile-nav" aria-label="Navegación administrativa móvil">
-            <Link className={navClassName(pathname, "/admin")} href="/admin">Resumen</Link>
             {hasStore ? (
               <>
                 <Link className={navClassName(pathname, `/admin/stores/${storeId}`)} href={`/admin/stores/${storeId}`}>Tienda</Link>
-                <Link className={navClassName(pathname, `/admin/stores/${storeId}/branches`)} href={`/admin/stores/${storeId}/branches`}>Sucursales</Link>
                 <Link className={pathname.startsWith(`/admin/stores/${storeId}/calendar`) ? "active" : undefined} href={`/admin/stores/${storeId}/calendar`}>Calendario</Link>
                 <Link className={pathname.startsWith(`/admin/stores/${storeId}/events`) ? "active" : undefined} href={`/admin/stores/${storeId}/events`}>Eventos</Link>
-                <Link className={pathname.startsWith(`/admin/stores/${storeId}/banners`) ? "active" : undefined} href={`/admin/stores/${storeId}/banners`}>Banners</Link>
                 <Link className={pathname.startsWith(`/admin/stores/${storeId}/series`) ? "active" : undefined} href={`/admin/stores/${storeId}/series`}>Series</Link>
+                <Link className={navClassName(pathname, `/admin/stores/${storeId}/branches`)} href={`/admin/stores/${storeId}/branches`}>Sucursales</Link>
+                <Link className={pathname.startsWith(`/admin/stores/${storeId}/banners`) ? "active" : undefined} href={`/admin/stores/${storeId}/banners`}>Banners</Link>
+                <Link className={navClassName(pathname, "/admin/stores")} href="/admin/stores">Tiendas</Link>
               </>
-            ) : null}
+            ) : (
+              <>
+                <Link className={navClassName(pathname, "/admin/stores")} href="/admin/stores">Mis tiendas</Link>
+                <Link className={navClassName(pathname, "/admin")} href="/admin">Panel global</Link>
+              </>
+            )}
           </nav>
         </header>
         <main className={`admin-content${isCalendarRoute ? " admin-content-wide" : ""}`}>{children}</main>
