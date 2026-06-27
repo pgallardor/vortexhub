@@ -198,7 +198,7 @@ export function EventForm({
     ?? customBanners[0];
   const activeBannerUrl = bannerMode === "custom" ? selectedCustomBanner?.publicUrl : selectedBanner?.bannerUrl;
   const activeBannerLabel = bannerMode === "custom"
-    ? "Custom"
+    ? selectedCustomBanner?.displayName ?? "Custom"
     : selectedGame?.name ?? "Juego";
   const isDraft = !event || event.status === "draft";
 
@@ -398,7 +398,7 @@ export function EventForm({
           >
             {customBanners.map((banner) => (
               <option key={banner.id} value={banner.id}>
-                Banner {new Date(banner.createdAt).toLocaleDateString("es-CL")}
+                {banner.displayName ?? `Banner ${new Date(banner.createdAt).toLocaleDateString("es-CL")}`}
               </option>
             ))}
           </select>

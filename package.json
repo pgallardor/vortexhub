@@ -12,7 +12,9 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:reset": "supabase db reset",
-    "onboard:store-owner": "node -- scripts/invite-store-owner.mjs"
+    "onboard:store-owner": "node -- scripts/invite-store-owner.mjs",
+    "backoffice:banners": "node -- scripts/platform-banner-backoffice.mjs",
+    "backoffice:banners:web": "node -- scripts/platform-banner-backoffice-web.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
@@ -20,6 +22,7 @@
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "sharp": "^0.34.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {

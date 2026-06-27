@@ -25,7 +25,7 @@ function parsePositiveInt(value: FormDataEntryValue | null, field: string) {
   return parsed;
 }
 
-function validateAssetType(value: FormDataEntryValue | null) {
+function validateAssetType(value: FormDataEntryValue | null): "store_logo" | "event_banner" {
   const assetType = String(value ?? "");
   if (assetType !== "store_logo" && assetType !== "event_banner") {
     throw new ApiError(422, "VALIDATION_ERROR", "Tipo de media inválido.");
@@ -46,11 +46,21 @@ function validateFile(value: FormDataEntryValue | null, field: string, expectedT
   return value;
 }
 
+function validateDisplayName(value: FormDataEntryValue | null, assetType: "store_logo" | "event_banner") {
+  const displayName = String(value ?? "").trim();
+  if (assetType !== "event_banner") return null;
+  if (displayName.length < 2 || displayName.length > 120) {
+    throw new ApiError(422, "VALIDATION_ERROR", "El nombre del banner debe tener entre 2 y 120 caracteres.");
+  }
+  return displayName;
+}
+
 export const POST = route(async (request: NextRequest, context: Context) => {
   const { storeId } = await context.params;
   const parsedStoreId = uuidSchema.parse(storeId);
   const formData = await request.formData();
   const assetType = validateAssetType(formData.get("assetType"));
+  const displayName = validateDisplayName(formData.get("displayName"), assetType);
   const sourceFile = validateFile(formData.get("sourceFile"), "sourceFile");
   const optimizedFile = validateFile(formData.get("optimizedFile"), "optimizedFile", "image/webp");
   const width = parsePositiveInt(formData.get("width"), "width");
@@ -69,6 +79,21 @@ export const POST = route(async (request: NextRequest, context: Context) => {
   }
 
   const supabase = await createSupabaseServerClient();
+  if (assetType === "event_banner") {
+    const { count, error: countError } = await supabase
+      .from("store_media_assets")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", parsedStoreId)
+      .eq("asset_type", "event_banner")
+      .eq("status", "active")
+      .is("deleted_at", null);
+
+    if (countError) throw new ApiError(403, "FORBIDDEN", countError.message);
+    if ((count ?? 0) >= 5) {
+      throw new ApiError(422, "VALIDATION_ERROR", "Puedes mantener hasta 5 banners custom activos.");
+    }
+  }
+
   const assetId = crypto.randomUUID();
   const sourcePath = `${parsedStoreId}/${assetType}/${assetId}/source.${extensionForMimeType(sourceFile.type)}`;
   const optimizedPath = `${parsedStoreId}/${assetType}/${assetId}/optimized.webp`;
@@ -97,6 +122,7 @@ export const POST = route(async (request: NextRequest, context: Context) => {
   const asset = await service.execute("register_store_media_asset", {
     store_id: parsedStoreId,
     asset_type: assetType,
+    display_name: displayName,
     source_storage_path: sourcePath,
     optimized_storage_path: optimizedPath,
     public_url: publicUrl,

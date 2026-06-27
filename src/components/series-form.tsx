@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useMemo, useState } from "react";
+import { type CSSProperties, type FormEvent, useMemo, useState } from "react";
 import { Field, StatusBadge } from "@/components/frontend";
 import type {
   AdminGameOption,
@@ -27,7 +27,16 @@ const weekdays = [
   { value: 7, label: "Dom" },
 ];
 
-type BannerPosition = "center";
+type BannerPosition =
+  | "center 20%"
+  | "center 32%"
+  | "center 42%"
+  | "center"
+  | "center 58%"
+  | "center 68%"
+  | "center 80%"
+  | "left center"
+  | "right center";
 
 type SeriesPayload = {
   gameId: string;
@@ -107,6 +116,34 @@ function bannerForGame(gameId: string, banners: AdminPlatformBannerOption[]) {
   );
 }
 
+const bannerPositions: Array<{ value: BannerPosition; label: string }> = [
+  { value: "center 20%", label: "Muy arriba" },
+  { value: "center 32%", label: "Arriba" },
+  { value: "center 42%", label: "Alto" },
+  { value: "center", label: "Centro" },
+  { value: "center 58%", label: "Bajo" },
+  { value: "center 68%", label: "Abajo" },
+  { value: "center 80%", label: "Muy abajo" },
+  { value: "left center", label: "Izquierda" },
+  { value: "right center", label: "Derecha" },
+];
+
+function normalizeBannerPosition(value?: string): BannerPosition {
+  if (bannerPositions.some((position) => position.value === value)) return value as BannerPosition;
+  if (value === "top") return "center 20%";
+  if (value === "bottom") return "center 80%";
+  if (value === "left") return "left center";
+  if (value === "right") return "right center";
+  return "center";
+}
+
+function bannerToneForGame(gameSlug?: string) {
+  if (gameSlug === "one-piece-tcg") return "blue";
+  if (gameSlug === "pokemon-tcg") return "amber";
+  if (gameSlug === "yugioh") return "violet";
+  return "rose";
+}
+
 export function SeriesForm({
   branches,
   customBanners,
@@ -141,6 +178,9 @@ export function SeriesForm({
   const [bannerMode, setBannerMode] = useState<"platform" | "custom">(series?.bannerMode ?? "platform");
   const [selectedBannerId, setSelectedBannerId] = useState(initialBannerId);
   const [selectedCustomBannerId, setSelectedCustomBannerId] = useState(initialCustomBannerId);
+  const [bannerPosition, setBannerPosition] = useState<BannerPosition>(
+    normalizeBannerPosition(series?.bannerPosition),
+  );
   const [locationMode, setLocationMode] = useState<LocationMode>(initialLocationMode);
   const [registrationMode, setRegistrationMode] = useState<RegistrationMode>(series?.registrationMode ?? "disabled");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -161,6 +201,10 @@ export function SeriesForm({
     ?? bannerForGame(selectedGameId, platformBanners);
   const selectedCustomBanner = customBanners.find((banner) => banner.id === selectedCustomBannerId)
     ?? customBanners[0];
+  const activeBannerUrl = bannerMode === "custom" ? selectedCustomBanner?.publicUrl : selectedBanner?.bannerUrl;
+  const activeBannerLabel = bannerMode === "custom"
+    ? selectedCustomBanner?.displayName ?? "Custom"
+    : selectedGame?.name ?? "Juego";
   const isDraft = !series || series.status === "draft";
 
   function toggleDay(day: number) {
@@ -206,7 +250,7 @@ export function SeriesForm({
       locationMode,
       bannerMode,
       platformBannerId: bannerMode === "platform" ? selectedBanner?.id ?? null : null,
-      bannerPosition: "center",
+      bannerPosition,
       customBannerAssetId: bannerMode === "custom" ? selectedCustomBanner?.id ?? null : null,
       weekdays: [...selectedDays].sort((left, right) => left - right),
       localStartTime: startTime,
@@ -368,7 +412,7 @@ export function SeriesForm({
               >
                 {customBanners.map((banner) => (
                   <option key={banner.id} value={banner.id}>
-                    Banner {new Date(banner.createdAt).toLocaleDateString("es-CL")}
+                    {banner.displayName ?? `Banner ${new Date(banner.createdAt).toLocaleDateString("es-CL")}`}
                   </option>
                 ))}
               </select>
@@ -381,6 +425,47 @@ export function SeriesForm({
             <Link className="text-link" href={`/admin/stores/${store.id}/banners`}>Banners custom</Link>.
           </p>
         ) : null}
+        <div className="banner-editor">
+          <div className="banner-preview-stack">
+            <div
+              className={`banner-preview tone-${bannerToneForGame(selectedGame?.slug)}${activeBannerUrl ? " has-image" : ""}`}
+              style={activeBannerUrl
+                ? {
+                    "--preview-banner-image": `url("${activeBannerUrl}")`,
+                    "--preview-banner-position": bannerPosition,
+                  } as CSSProperties
+                : undefined}
+            >
+              <span>Tarjeta - {activeBannerLabel}</span>
+            </div>
+            <div
+              className={`banner-strip-preview tone-${bannerToneForGame(selectedGame?.slug)}${activeBannerUrl ? " has-image" : ""}`}
+              style={activeBannerUrl
+                ? {
+                    "--preview-banner-image": `url("${activeBannerUrl}")`,
+                    "--preview-banner-position": bannerPosition,
+                  } as CSSProperties
+                : undefined}
+            >
+              <span>Franja de agenda</span>
+            </div>
+          </div>
+          <fieldset className="banner-position-picker">
+            <legend>Enfoque</legend>
+            <div>
+              {bannerPositions.map((position) => (
+                <button
+                  className={bannerPosition === position.value ? "selected" : undefined}
+                  key={position.value}
+                  onClick={() => setBannerPosition(position.value)}
+                  type="button"
+                >
+                  {position.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        </div>
 
         <div className="form-section-heading">
           <div><p className="eyebrow">Recurrencia semanal</p><h2>Dias y horario</h2></div>

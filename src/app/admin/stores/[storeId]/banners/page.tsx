@@ -14,14 +14,22 @@ export default async function AdminStoreBannersPage({ params }: { params: Promis
 
   const { store } = workspace.overview;
   const banners = mediaAssets.filter((asset) => asset.assetType === "event_banner" && asset.status === "active");
+  const maxCustomBanners = 5;
 
   return (
     <>
       <PageHeader
         eyebrow={store.name}
         title="Banners custom"
-        description="Biblioteca reutilizable de banners para eventos de la tienda durante el piloto."
-        action={<StoreMediaUploader assetType="event_banner" storeId={store.id} />}
+        description={`Biblioteca reutilizable de hasta ${maxCustomBanners} banners para eventos de la tienda durante el piloto.`}
+        action={(
+          <StoreMediaUploader
+            activeCount={banners.length}
+            assetType="event_banner"
+            maxActiveCount={maxCustomBanners}
+            storeId={store.id}
+          />
+        )}
       />
       {banners.length ? (
         <div className="media-grid">
@@ -36,7 +44,8 @@ export default async function AdminStoreBannersPage({ params }: { params: Promis
               <div className="media-card-body">
                 <div>
                   <p className="eyebrow">Banner reusable</p>
-                  <h2>{banner.width} x {banner.height}</h2>
+                  <h2>{banner.displayName ?? "Banner custom"}</h2>
+                  <p>{banner.width} x {banner.height}</p>
                   <p>Subido el {new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(banner.createdAt))}</p>
                 </div>
                 <div className="button-row">

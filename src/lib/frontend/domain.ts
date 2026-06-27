@@ -106,6 +106,7 @@ export interface EventSeriesSummary {
     currency: string;
   } | null;
   bannerMode: "platform" | "custom";
+  bannerPosition?: string;
   platformBannerId?: string | null;
   customBannerAssetId?: string | null;
 }

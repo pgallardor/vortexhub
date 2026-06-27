@@ -68,6 +68,7 @@ export type AdminStoreMediaAsset = {
   id: string;
   storeId: string;
   assetType: "store_logo" | "event_banner";
+  displayName: string | null;
   optimizedStoragePath: string | null;
   publicUrl: string | null;
   width: number;
@@ -115,6 +116,7 @@ type EventSeriesRow = {
   banner_mode: "platform" | "custom";
   platform_banner_id: string | null;
   custom_banner_asset_id: string | null;
+  banner_position: string | null;
 };
 
 type EventRow = {
@@ -148,6 +150,7 @@ type StoreMediaAssetRow = {
   id: string;
   store_id: string;
   asset_type: "store_logo" | "event_banner";
+  display_name: string | null;
   optimized_storage_path: string | null;
   width: number;
   height: number;
@@ -186,6 +189,7 @@ function mapStoreMediaAsset(row: StoreMediaAssetRow): AdminStoreMediaAsset {
     id: row.id,
     storeId: row.store_id,
     assetType: row.asset_type,
+    displayName: row.display_name,
     optimizedStoragePath: row.optimized_storage_path,
     publicUrl: row.optimized_storage_path
       ? publicStorageUrl("store-media-optimized", row.optimized_storage_path)
@@ -353,6 +357,7 @@ function mapSeries(
     locationCountryCode: row.location_country_code,
     entryFee: entryFee(row.entry_fee_amount, row.entry_fee_currency),
     bannerMode: row.banner_mode,
+    bannerPosition: row.banner_position ?? "center",
     platformBannerId: row.platform_banner_id,
     customBannerAssetId: row.custom_banner_asset_id,
   };
@@ -414,7 +419,7 @@ async function loadAdminData(): Promise<AdminDataSet> {
       local_start_time,duration_minutes,timezone,starts_on,ends_on,
       registration_mode,external_registration_url,location_mode,location_text,location_city,
       location_region,location_country_code,entry_fee_amount,entry_fee_currency,game_id,other_game_name,
-      banner_mode,platform_banner_id,custom_banner_asset_id
+      banner_mode,platform_banner_id,custom_banner_asset_id,banner_position
     `)
     .in("store_id", storeIds)
     .is("deleted_at", null)
@@ -440,7 +445,7 @@ async function loadAdminData(): Promise<AdminDataSet> {
 
   const { data: mediaRows, error: mediaError } = await client
     .from("store_media_assets")
-    .select("id,store_id,asset_type,optimized_storage_path,width,height,status,created_at")
+    .select("id,store_id,asset_type,display_name,optimized_storage_path,width,height,status,created_at")
     .in("store_id", storeIds)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
@@ -501,7 +506,7 @@ export async function getAdminEventFormOptions(storeId?: string): Promise<{
   if (storeId) {
     const { data: customRows, error: customError } = await client
       .from("store_media_assets")
-      .select("id,store_id,asset_type,optimized_storage_path,width,height,status,created_at")
+      .select("id,store_id,asset_type,display_name,optimized_storage_path,width,height,status,created_at")
       .eq("store_id", storeId)
       .eq("asset_type", "event_banner")
       .eq("status", "active")

@@ -51,6 +51,25 @@ Invite a new store owner during the pilot:
 npm run onboard:store-owner -- --env-file .env.local owner@example.com
 ```
 
+Run the local platform-banner backoffice against production:
+
+```bash
+npm run backoffice:banners -- --env-file .env.production
+npm run backoffice:banners:web -- --env-file .env.production
+```
+
+The banner backoffice is an interactive terminal tool for platform banners. It
+lists active and inactive banners, uploads WebP files to the public
+`platform-event-banners` bucket, creates or edits `platform_event_banners`
+records, and deactivates banners instead of deleting rows that historical
+events may reference. The `:web` variant runs a small local visual UI on
+`http://127.0.0.1:4317` with image previews before upload, in-browser
+conversion from common image formats to WebP, existing banner cards, and
+Storage thumbnails. Keep `SUPABASE_SERVICE_ROLE_KEY` only in local env files
+or the terminal. Optionally set
+`VORTEXHUB_BACKOFFICE_ACTOR_ACCOUNT_ID` to an internal account UUID so audit
+rows include the human operator.
+
 Locally, the invite uses the Supabase Auth invite template in
 `supabase/templates/invite.html`, creates a session through `/auth/callback`,
 and sends the owner to `/auth/onboarding` to set a password, accept the current
@@ -104,9 +123,12 @@ RESEND_FROM_EMAIL="VortexHub <no-reply@your-domain.com>"
 RESEND_REPLY_TO_EMAIL=<optional support inbox>
 ```
 
-Apply `supabase/migrations/` to the target Supabase project before pointing
-Vercel at it. Local demo users in `supabase/seeds/02_dev_users.sql` are for
-development only and must not be loaded in production.
+Apply `supabase/migrations/` to the target Supabase project before deploying
+the app. Vercel production deploys are triggered from GitHub when `main` is
+pushed, so do not run `vercel deploy --prod` manually for normal releases; push
+to `main` once the database is ready to avoid double deployments. Local demo
+users in `supabase/seeds/02_dev_users.sql` are for development only and must not
+be loaded in production.
 
 Do not expose `SUPABASE_SERVICE_ROLE_KEY` to browser code. Keep it only in the
 terminal, CI job, or a future server-only admin endpoint that sends owner
