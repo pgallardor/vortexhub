@@ -101,6 +101,17 @@ async function optimizeImage(file: File, assetType: AssetType) {
   };
 }
 
+function displayNameFromFileName(fileName: string) {
+  const withoutExtension = fileName.replace(/\.[^.]+$/, "");
+  const normalized = withoutExtension
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (normalized.length < 2) return "Banner custom";
+  return normalized.slice(0, 120);
+}
+
 export function StoreMediaUploader({
   activeCount = 0,
   assetType,
@@ -113,7 +124,6 @@ export function StoreMediaUploader({
   storeId: string;
 }) {
   const router = useRouter();
-  const [displayName, setDisplayName] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const reachedLimit = maxActiveCount != null && activeCount >= maxActiveCount;
@@ -124,11 +134,6 @@ export function StoreMediaUploader({
     if (!file) return;
     if (reachedLimit) {
       setErrorMessage(`Puedes mantener hasta ${maxActiveCount} banners custom activos.`);
-      return;
-    }
-    const normalizedDisplayName = displayName.trim();
-    if (assetType === "event_banner" && (normalizedDisplayName.length < 2 || normalizedDisplayName.length > 120)) {
-      setErrorMessage("El nombre del banner debe tener entre 2 y 120 caracteres.");
       return;
     }
 
@@ -147,7 +152,9 @@ export function StoreMediaUploader({
       const optimizedFile = new File([optimized.blob], "optimized.webp", { type: "image/webp" });
       const formData = new FormData();
       formData.set("assetType", assetType);
-      if (normalizedDisplayName) formData.set("displayName", normalizedDisplayName);
+      if (assetType === "event_banner") {
+        formData.set("displayName", displayNameFromFileName(file.name));
+      }
       formData.set("sourceFile", file);
       formData.set("optimizedFile", optimizedFile);
       formData.set("width", String(optimized.width));
@@ -163,7 +170,6 @@ export function StoreMediaUploader({
       }
 
       router.refresh();
-      if (assetType === "event_banner") setDisplayName("");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No pudimos subir la imagen.");
     } finally {
@@ -173,17 +179,6 @@ export function StoreMediaUploader({
 
   return (
     <div className="media-uploader">
-      {assetType === "event_banner" ? (
-        <input
-          className="media-name-input"
-          disabled={isUploading || reachedLimit}
-          maxLength={120}
-          onChange={(event) => setDisplayName(event.target.value)}
-          placeholder="Nombre del banner"
-          type="text"
-          value={displayName}
-        />
-      ) : null}
       <label className={`button ${assetType === "store_logo" ? "button-secondary" : "button-primary"}`}>
         <input accept="image/jpeg,image/png,image/webp" disabled={isUploading || reachedLimit} onChange={onFileChange} type="file" />
         {isUploading ? "Subiendo..." : reachedLimit ? "Limite alcanzado" : constraints[assetType].label}

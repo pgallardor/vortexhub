@@ -46,9 +46,24 @@ function validateFile(value: FormDataEntryValue | null, field: string, expectedT
   return value;
 }
 
-function validateDisplayName(value: FormDataEntryValue | null, assetType: "store_logo" | "event_banner") {
-  const displayName = String(value ?? "").trim();
+function displayNameFromFileName(fileName: string) {
+  const withoutExtension = fileName.replace(/\.[^.]+$/, "");
+  const normalized = withoutExtension
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (normalized.length < 2) return "Banner custom";
+  return normalized.slice(0, 120);
+}
+
+function validateDisplayName(
+  value: FormDataEntryValue | null,
+  assetType: "store_logo" | "event_banner",
+  fallbackFileName: string,
+) {
   if (assetType !== "event_banner") return null;
+  const displayName = String(value ?? "").trim() || displayNameFromFileName(fallbackFileName);
   if (displayName.length < 2 || displayName.length > 120) {
     throw new ApiError(422, "VALIDATION_ERROR", "El nombre del banner debe tener entre 2 y 120 caracteres.");
   }
@@ -60,8 +75,8 @@ export const POST = route(async (request: NextRequest, context: Context) => {
   const parsedStoreId = uuidSchema.parse(storeId);
   const formData = await request.formData();
   const assetType = validateAssetType(formData.get("assetType"));
-  const displayName = validateDisplayName(formData.get("displayName"), assetType);
   const sourceFile = validateFile(formData.get("sourceFile"), "sourceFile");
+  const displayName = validateDisplayName(formData.get("displayName"), assetType, sourceFile.name);
   const optimizedFile = validateFile(formData.get("optimizedFile"), "optimizedFile", "image/webp");
   const width = parsePositiveInt(formData.get("width"), "width");
   const height = parsePositiveInt(formData.get("height"), "height");

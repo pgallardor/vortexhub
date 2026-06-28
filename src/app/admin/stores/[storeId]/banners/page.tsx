@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { RemoveMediaButton } from "@/components/admin/remove-media-button";
+import { RenameMediaButton } from "@/components/admin/rename-media-button";
 import { StoreMediaUploader } from "@/components/admin/store-media-uploader";
 import { PageHeader, StatusBadge } from "@/components/frontend";
 import { getAdminStore, getAdminStoreMedia } from "@/lib/frontend/admin-data";
@@ -48,8 +49,9 @@ export default async function AdminStoreBannersPage({ params }: { params: Promis
                   <p>{banner.width} x {banner.height}</p>
                   <p>Subido el {new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }).format(new Date(banner.createdAt))}</p>
                 </div>
-                <div className="button-row">
+                <div className="media-card-actions">
                   <StatusBadge status={banner.status} />
+                  <RenameMediaButton assetId={banner.id} currentDisplayName={banner.displayName ?? "Banner custom"} />
                   <RemoveMediaButton assetId={banner.id} />
                 </div>
               </div>
