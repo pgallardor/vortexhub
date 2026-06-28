@@ -11,10 +11,12 @@ function formatEventDate(event: EventSummary) {
 }
 
 export function AdminEventList({
+  emptyMessage = "Todavía no hay eventos para mostrar.",
   events,
   storeId,
   limit,
 }: {
+  emptyMessage?: string;
   events: EventSummary[];
   storeId?: string;
   limit?: number;
@@ -22,7 +24,7 @@ export function AdminEventList({
   const visibleEvents = typeof limit === "number" ? events.slice(0, limit) : events;
 
   if (visibleEvents.length === 0) {
-    return <div className="admin-empty">Todavía no hay eventos para mostrar.</div>;
+    return <div className="admin-empty">{emptyMessage}</div>;
   }
 
   return (

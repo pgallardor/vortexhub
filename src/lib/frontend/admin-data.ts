@@ -739,6 +739,99 @@ export async function getAdminStoreEvents(storeId: string): Promise<EventSummary
   return workspace?.events ?? null;
 }
 
+export async function getAdminStoreEventList(
+  storeId: string,
+  { includeCompleted = false }: { includeCompleted?: boolean } = {},
+): Promise<{ store: StoreSummary; events: EventSummary[] } | null> {
+  const client = await createSupabaseServerClient();
+  const user = await requireUser(client);
+
+  const { data: branchRows, error: branchError } = await client
+    .from("branches")
+    .select("id,store_id,slug,name,address_line,city,region,country_code,latitude,longitude,timezone,status")
+    .eq("store_id", storeId)
+    .is("deleted_at", null)
+    .order("name");
+  if (branchError) throw branchError;
+
+  const branches = (branchRows as BranchRow[]).map(mapBranch);
+
+  const { data: storeRow, error: storeError } = await client
+    .from("stores")
+    .select("id,slug,name,description,logo_url,timezone,status,is_publicly_visible")
+    .eq("id", storeId)
+    .is("deleted_at", null)
+    .maybeSingle<StoreRow>();
+  if (storeError) throw storeError;
+  if (!storeRow) return null;
+
+  const { data: viewerMembershipRow, error: viewerMembershipError } = await client
+    .from("store_memberships")
+    .select("store_id,role,scope,status")
+    .eq("store_id", storeId)
+    .eq("user_account_id", user.id)
+    .eq("status", "active")
+    .is("deleted_at", null)
+    .maybeSingle<ViewerMembershipRow>();
+  if (viewerMembershipError) throw viewerMembershipError;
+
+  const viewerMembershipsByStoreId = new Map<string, ViewerMembershipRow>();
+  if (viewerMembershipRow) {
+    viewerMembershipsByStoreId.set(viewerMembershipRow.store_id, viewerMembershipRow);
+  }
+
+  const store = mapStore(storeRow, branches, viewerMembershipsByStoreId);
+
+  const { data: gameRows, error: gameError } = await client
+    .from("games")
+    .select("id,slug,name")
+    .eq("is_active", true);
+  if (gameError) throw gameError;
+
+  const gamesById = new Map(
+    (gameRows as GameRow[]).map((game) => [game.id, { slug: game.slug, name: game.name }]),
+  );
+
+  const { data: seriesRows, error: seriesError } = await client
+    .from("event_series")
+    .select(`
+      id,slug,store_id,branch_id,title,description,format_name,status,weekdays,
+      local_start_time,duration_minutes,timezone,starts_on,ends_on,
+      registration_mode,external_registration_url,location_mode,location_text,location_city,
+      location_region,location_country_code,entry_fee_amount,entry_fee_currency,game_id,other_game_name,
+      banner_mode,platform_banner_id,custom_banner_asset_id,banner_position
+    `)
+    .eq("store_id", storeId)
+    .is("deleted_at", null)
+    .order("starts_on");
+  if (seriesError) throw seriesError;
+
+  const series = (seriesRows as EventSeriesRow[]).map((row) => mapSeries(row, [store], branches, gamesById));
+
+  let eventQuery = client
+    .from("events")
+    .select(`
+      id,slug,store_id,branch_id,event_series_id,title,description,format_name,status,
+      registration_mode,external_registration_url,starts_at,ends_at,
+      entry_fee_amount,entry_fee_currency,location_mode,location_text,location_city,location_region,
+      game_id,banner_mode,platform_banner_id,custom_banner_asset_id,banner_position
+    `)
+    .eq("store_id", storeId)
+    .is("deleted_at", null);
+
+  if (!includeCompleted) {
+    eventQuery = eventQuery.neq("status", "completed");
+  }
+
+  const { data: eventRows, error: eventError } = await eventQuery.order("starts_at");
+  if (eventError) throw eventError;
+
+  return {
+    store,
+    events: (eventRows as EventRow[]).map((row) => mapEvent(row, [store], branches, series, gamesById)),
+  };
+}
+
 export async function getAdminStoreBranches(storeId: string): Promise<BranchSummary[] | null> {
   const workspace = await getAdminStore(storeId);
   return workspace?.branches ?? null;
