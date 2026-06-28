@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:fresh": "rm -rf .next && next dev",
-    "build": "NEXT_DIST_DIR=.next-build next build",
+    "build": "node scripts/build-next.mjs",
     "start": "NEXT_DIST_DIR=.next-build next start",
     "clean:next": "rm -rf .next .next-build",
     "lint": "next lint",
