@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { Field } from "@/components/frontend";
+import { queueUserFeedback } from "@/components/user-feedback";
 
 type StoreResponse = {
   id: string;
@@ -56,6 +57,15 @@ export function StoreForm() {
         body: JSON.stringify(payload),
       }));
 
+      queueUserFeedback({
+        tone: "success",
+        title: "Tienda creada",
+        description: `${payload.name} quedó lista para completar identidad, sucursales y eventos.`,
+        action: {
+          label: "Abrir tienda",
+          href: store.id ? `/admin/stores/${store.id}` : "/admin/stores",
+        },
+      });
       router.refresh();
       router.replace(store.id ? `/admin/stores/${store.id}` : "/admin/stores");
     } catch (error) {

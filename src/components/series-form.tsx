@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type CSSProperties, type FormEvent, useMemo, useState } from "react";
 import { Field, StatusBadge } from "@/components/frontend";
+import { queueUserFeedback } from "@/components/user-feedback";
 import type {
   AdminGameOption,
   AdminPlatformBannerOption,
@@ -333,6 +334,19 @@ export function SeriesForm({
         await readApiResponse<{ id: string }>(activateResponse);
       }
 
+      queueUserFeedback({
+        tone: "success",
+        title: shouldActivate ? "Serie activada" : series ? "Serie actualizada" : "Borrador guardado",
+        description: shouldActivate
+          ? `${payload.title} generó las ocurrencias elegibles de esta semana.`
+          : series ? `Guardamos los cambios futuros de ${payload.title}.` : `${payload.title} quedó guardada como borrador.`,
+        action: {
+          label: shouldActivate ? "Ver calendario" : "Abrir serie",
+          href: shouldActivate
+            ? `/admin/stores/${store.id}/calendar`
+            : `/admin/stores/${store.id}/series/${savedSeries.id}/edit`,
+        },
+      });
       router.refresh();
       router.push(`/admin/stores/${store.id}/series`);
     } catch (error) {

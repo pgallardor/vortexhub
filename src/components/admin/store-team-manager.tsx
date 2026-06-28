@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { Field, StatusBadge } from "@/components/frontend";
+import { queueUserFeedback } from "@/components/user-feedback";
 import type {
   BranchSummary,
   StoreMembershipRole,
@@ -161,6 +162,11 @@ function InviteMemberForm({
       }));
 
       setInviteLink(invitationAcceptUrl(invitation.token));
+      queueUserFeedback({
+        tone: "success",
+        title: "Invitación creada",
+        description: `Generamos un enlace de acceso para ${String(formData.get("email") ?? "").trim()}.`,
+      }, { deliverNow: true });
       form.reset();
       setRole(canInviteOwners ? "admin" : "staff");
       setScope("store");

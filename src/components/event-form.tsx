@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { type CSSProperties, type FormEvent, useMemo, useState } from "react";
 import { Field } from "@/components/frontend";
+import { queueUserFeedback } from "@/components/user-feedback";
 import type { AdminGameOption, AdminPlatformBannerOption, AdminStoreMediaAsset } from "@/lib/frontend/admin-data";
 import type { BranchSummary, EventSummary, LocationMode, RegistrationMode, StoreSummary } from "@/lib/frontend/domain";
 
@@ -321,6 +322,19 @@ export function EventForm({
         await readApiResponse<{ id: string }>(publishResponse);
       }
 
+      queueUserFeedback({
+        tone: "success",
+        title: shouldPublish ? "Evento publicado" : event ? "Evento actualizado" : "Borrador guardado",
+        description: shouldPublish
+          ? `${payload.title} ya está visible para la operación de la tienda.`
+          : event ? `Guardamos los cambios de ${payload.title}.` : `${payload.title} quedó guardado como borrador.`,
+        action: {
+          label: shouldPublish ? "Ver calendario" : "Abrir evento",
+          href: shouldPublish
+            ? `/admin/stores/${store.id}/calendar`
+            : `/admin/stores/${store.id}/events/${savedEvent.id}/edit`,
+        },
+      });
       router.refresh();
       router.push(`/admin/stores/${store.id}/events`);
     } catch (error) {

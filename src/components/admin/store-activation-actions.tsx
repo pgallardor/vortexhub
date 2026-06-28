@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { queueUserFeedback } from "@/components/user-feedback";
 import type { StoreSummary } from "@/lib/frontend/domain";
 
 type ApiResponse<T> = {
@@ -38,6 +39,15 @@ export function StoreActivationActions({ store }: { store: StoreSummary }) {
     try {
       const response = await fetch(`/api/v1/stores/${store.id}/activate`, { method: "POST" });
       await readApiResponse(response);
+      queueUserFeedback({
+        tone: "success",
+        title: "Tienda activada",
+        description: `${store.name} puede publicar eventos visibles según su configuración de visibilidad.`,
+        action: {
+          label: "Crear evento",
+          href: `/admin/stores/${store.id}/events/new`,
+        },
+      }, { deliverNow: true });
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No pudimos activar la tienda.");

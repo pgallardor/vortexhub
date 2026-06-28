@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, useState } from "react";
+import { queueUserFeedback } from "@/components/user-feedback";
 
 type AssetType = "store_logo" | "event_banner";
 
@@ -169,6 +170,13 @@ export function StoreMediaUploader({
         throw new Error(body.error?.message ?? "No pudimos subir la imagen.");
       }
 
+      queueUserFeedback({
+        tone: "success",
+        title: assetType === "store_logo" ? "Logo actualizado" : "Banner subido",
+        description: assetType === "store_logo"
+          ? "La identidad visual de la tienda se actualizó correctamente."
+          : "El banner custom quedó disponible para eventos y series elegibles.",
+      }, { deliverNow: true });
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No pudimos subir la imagen.");

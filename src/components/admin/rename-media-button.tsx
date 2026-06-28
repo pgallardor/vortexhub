@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { queueUserFeedback } from "@/components/user-feedback";
 
 export function RenameMediaButton({
   assetId,
@@ -38,6 +39,11 @@ export function RenameMediaButton({
       }
 
       setIsEditing(false);
+      queueUserFeedback({
+        tone: "success",
+        title: "Banner renombrado",
+        description: `${normalizedDisplayName} quedó guardado como nombre visible en administración.`,
+      }, { deliverNow: true });
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No pudimos renombrar el banner.");

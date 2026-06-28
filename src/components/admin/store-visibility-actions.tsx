@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { queueUserFeedback } from "@/components/user-feedback";
 import type { StoreSummary } from "@/lib/frontend/domain";
 
 type ApiResponse<T> = {
@@ -43,6 +44,13 @@ export function StoreVisibilityActions({ store }: { store: StoreSummary }) {
         body: JSON.stringify({ isPubliclyVisible: nextVisibility }),
       });
       await readApiResponse(response);
+      queueUserFeedback({
+        tone: "success",
+        title: nextVisibility ? "Calendario publicado" : "Calendario oculto",
+        description: nextVisibility
+          ? `${store.name} vuelve a aparecer en superficies públicas cuando la tienda está activa.`
+          : `${store.name} quedó fuera del directorio y calendarios públicos.`,
+      }, { deliverNow: true });
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No pudimos actualizar la visibilidad publica.");

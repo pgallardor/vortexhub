@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useMemo, useRef, useState } from "react";
 import { Field } from "@/components/frontend";
+import { queueUserFeedback } from "@/components/user-feedback";
 import type { StoreSummary } from "@/lib/frontend/domain";
 
 type BranchPayload = {
@@ -111,6 +112,11 @@ export function BranchForm({ store }: { store: StoreSummary }) {
         region: "",
         countryCode: "CL",
       });
+      queueUserFeedback({
+        tone: "success",
+        title: "Sucursal creada",
+        description: `${payload.name} ya puede usarse como ubicación de eventos.`,
+      }, { deliverNow: true });
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No pudimos guardar la sucursal.");
