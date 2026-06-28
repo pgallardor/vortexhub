@@ -55,9 +55,13 @@ async function readApiResponse<T>(response: Response): Promise<T> {
 export function StoreOwnerOnboardingForm({
   email,
   legalDocument,
+  requirePassword = true,
+  redirectTo = "/admin/stores/new",
 }: {
   email: string;
   legalDocument: LegalDocument;
+  requirePassword?: boolean;
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
@@ -68,7 +72,8 @@ export function StoreOwnerOnboardingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const strength = useMemo(() => passwordStrength(password), [password]);
   const passwordsMatch = password.length > 0 && password === passwordConfirmation;
-  const canSubmit = strength.score >= 3 && passwordsMatch && acceptedAgeDeclaration && displayName.trim().length >= 2;
+  const passwordReady = !requirePassword || (strength.score >= 3 && passwordsMatch);
+  const canSubmit = passwordReady && acceptedAgeDeclaration && displayName.trim().length >= 2;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,9 +84,11 @@ export function StoreOwnerOnboardingForm({
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: passwordError } = await supabase.auth.updateUser({ password });
-      if (passwordError) {
-        throw new Error(passwordError.message || "No pudimos guardar la contraseña.");
+      if (requirePassword) {
+        const { error: passwordError } = await supabase.auth.updateUser({ password });
+        if (passwordError) {
+          throw new Error(passwordError.message || "No pudimos guardar la contraseña.");
+        }
       }
 
       await readApiResponse(await fetch("/api/v1/account", {
@@ -98,7 +105,7 @@ export function StoreOwnerOnboardingForm({
         method: "POST",
       }));
 
-      router.replace("/admin/stores/new");
+      router.replace(redirectTo);
       router.refresh();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No pudimos crear la cuenta.");
@@ -121,37 +128,41 @@ export function StoreOwnerOnboardingForm({
           value={displayName}
         />
       </Field>
-      <Field label="Contraseña" hint={strength.hint}>
-        <input
-          autoComplete="new-password"
-          minLength={10}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="••••••••••"
-          required
-          type="password"
-          value={password}
-        />
-      </Field>
-      <div className={`password-strength strength-${strength.score}`}>
-        <span>Fuerza: {strength.label}</span>
-        <div aria-hidden="true">
-          {[0, 1, 2, 3].map((step) => (
-            <i className={step < strength.score ? "active" : undefined} key={step} />
-          ))}
-        </div>
-      </div>
-      <Field label="Confirmar contraseña">
-        <input
-          autoComplete="new-password"
-          onChange={(event) => setPasswordConfirmation(event.target.value)}
-          placeholder="••••••••••"
-          required
-          type="password"
-          value={passwordConfirmation}
-        />
-      </Field>
-      {passwordConfirmation && !passwordsMatch ? (
-        <p className="form-error" role="alert">Las contraseñas no coinciden.</p>
+      {requirePassword ? (
+        <>
+          <Field label="Contraseña" hint={strength.hint}>
+            <input
+              autoComplete="new-password"
+              minLength={10}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••••"
+              required
+              type="password"
+              value={password}
+            />
+          </Field>
+          <div className={`password-strength strength-${strength.score}`}>
+            <span>Fuerza: {strength.label}</span>
+            <div aria-hidden="true">
+              {[0, 1, 2, 3].map((step) => (
+                <i className={step < strength.score ? "active" : undefined} key={step} />
+              ))}
+            </div>
+          </div>
+          <Field label="Confirmar contraseña">
+            <input
+              autoComplete="new-password"
+              onChange={(event) => setPasswordConfirmation(event.target.value)}
+              placeholder="••••••••••"
+              required
+              type="password"
+              value={passwordConfirmation}
+            />
+          </Field>
+          {passwordConfirmation && !passwordsMatch ? (
+            <p className="form-error" role="alert">Las contraseñas no coinciden.</p>
+          ) : null}
+        </>
       ) : null}
       <label className="checkbox-row">
         <input
@@ -165,7 +176,7 @@ export function StoreOwnerOnboardingForm({
       <p className="form-helper">Versión legal: {legalDocument.version}</p>
       {errorMessage ? <p className="form-error" role="alert">{errorMessage}</p> : null}
       <button className="button button-primary" disabled={!canSubmit || isSubmitting} type="submit">
-        {isSubmitting ? "Creando cuenta..." : "Crear cuenta y entrar al panel"}
+        {isSubmitting ? "Creando cuenta..." : requirePassword ? "Crear cuenta y entrar al panel" : "Completar acceso"}
       </button>
     </form>
   );

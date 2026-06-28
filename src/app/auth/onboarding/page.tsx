@@ -25,10 +25,11 @@ function safeRedirectTo(value: string | undefined) {
 export default async function StoreOwnerOnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirectTo?: string }>;
+  searchParams: Promise<{ passwordMode?: string; redirectTo?: string }>;
 }) {
-  const { redirectTo: redirectToParam } = await searchParams;
+  const { passwordMode, redirectTo: redirectToParam } = await searchParams;
   const redirectTo = safeRedirectTo(redirectToParam);
+  const requirePassword = passwordMode !== "skip";
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -94,8 +95,17 @@ export default async function StoreOwnerOnboardingPage({
         <Brand />
         <p className="eyebrow">Bienvenida a tiendas</p>
         <h1>Crea tu acceso</h1>
-        <p>Define una contraseña segura y acepta la declaración de mayoría de edad para entrar al panel.</p>
-        <StoreOwnerOnboardingForm email={user.email} legalDocument={legalDocument} />
+        <p>
+          {requirePassword
+            ? "Define una contraseña segura y acepta la declaración de mayoría de edad para entrar al panel."
+            : "Completa tu nombre visible y acepta la declaración de mayoría de edad para entrar al panel."}
+        </p>
+        <StoreOwnerOnboardingForm
+          email={user.email}
+          legalDocument={legalDocument}
+          redirectTo={redirectTo}
+          requirePassword={requirePassword}
+        />
         <div className="auth-footer">
           <Link className="text-link" href="/">← Volver al calendario</Link>
         </div>

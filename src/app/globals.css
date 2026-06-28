@@ -571,9 +571,29 @@ p { color: var(--muted); line-height: 1.65; }
 .data-table th, .data-table td { padding: .9rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
 .data-table th { color: var(--muted); font-family: ui-monospace, monospace; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
 .data-table td { font-size: .88rem; }
+.team-layout { display: grid; gap: 0; }
+.team-section-first { padding-top: 0; }
+.team-invite-form { max-width: 820px; }
+.team-branch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; padding: .8rem; border: 1px solid var(--border); border-radius: 10px; background: #0b1018; }
+.team-branch-grid .checkbox-row { align-items: center; margin: 0; }
+.team-invite-link { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .55rem; align-items: center; padding: .8rem; border: 1px solid #63d99a55; border-radius: 10px; background: #63d99a10; }
+.team-invite-link span { grid-column: 1 / -1; color: var(--success); font-size: .68rem; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
+.team-invite-link code { overflow: hidden; color: var(--foreground); font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+.team-member-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.team-member-card { display: grid; gap: 1rem; }
+.team-member-card.is-disabled { opacity: .72; }
+.team-member-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.team-member-heading h2 { margin-bottom: .2rem; font-size: 1.1rem; }
+.team-member-heading p { margin-bottom: 0; font-size: .82rem; }
 .auth-page { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
 .auth-card { width: min(460px, 100%); }
 .auth-card .brand { margin-bottom: 2rem; }
+.auth-mode-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem; padding: .35rem; border: 1px solid var(--border); border-radius: 10px; background: #0b1018; }
+.auth-mode-switch button { min-height: 38px; border: 1px solid transparent; border-radius: 8px; color: var(--muted); background: transparent; font-size: .78rem; font-weight: 850; }
+.auth-mode-switch button:hover, .auth-mode-switch button.selected { color: var(--foreground); border-color: #67a9ff55; background: #67a9ff16; }
+.invitation-summary { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: .45rem .8rem; margin: 1rem 0; padding: .85rem; border: 1px solid var(--border); border-radius: 10px; background: #0b1018; }
+.invitation-summary span { color: var(--muted); font-size: .68rem; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.invitation-summary strong { overflow-wrap: anywhere; font-size: .84rem; }
 .auth-footer { display: grid; gap: .4rem; margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .auth-footer p { margin-bottom: 0; }
 .checkbox-row { display: flex; gap: .7rem; color: var(--muted); font-size: .78rem; line-height: 1.5; }
@@ -589,6 +609,7 @@ p { color: var(--muted); line-height: 1.65; }
   .series-form-layout { grid-template-columns: 1fr; }
   .series-preview { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .store-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .team-member-grid { grid-template-columns: 1fr; }
   .agenda-event { grid-template-columns: 68px minmax(0, 1fr) auto; }
   .agenda-event-meta { display: none; }
   .player-interest-hero { grid-template-columns: 1fr; }
@@ -604,6 +625,7 @@ p { color: var(--muted); line-height: 1.65; }
   .header-actions .button { min-height: 36px; padding: .45rem .65rem; font-size: .72rem; }
   .hero { padding-top: 3rem; }
   .hero-grid, .filter-bar, .card-grid, .store-grid, .form-grid.two, .location-widget, .branch-map-preview { grid-template-columns: 1fr; }
+  .team-branch-grid, .team-invite-link, .invitation-summary { grid-template-columns: 1fr; }
   .banner-editor { grid-template-columns: 1fr; }
   .media-grid { grid-template-columns: 1fr; }
   .media-uploader { justify-items: stretch; }

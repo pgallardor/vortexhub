@@ -20,6 +20,11 @@ export interface StoreSummary {
   isPubliclyVisible: boolean;
   cityLabel: string;
   logoUrl?: string;
+  viewerMembership?: {
+    role: StoreMembershipRole;
+    scope: StoreMembershipScope;
+    status: StoreMembershipStatus;
+  };
 }
 
 export interface BranchSummary {
@@ -131,6 +136,45 @@ export interface AdminStoreWorkspace {
   branches: BranchSummary[];
   events: EventSummary[];
   series: EventSeriesSummary[];
+}
+
+export type StoreMembershipRole = "owner" | "admin" | "staff";
+export type StoreMembershipScope = "store" | "branches";
+export type StoreMembershipStatus = "active" | "disabled";
+export type StoreInvitationStatus = "pending" | "accepted" | "revoked" | "expired";
+
+export interface StoreTeamMember {
+  id: string;
+  storeId: string;
+  userAccountId: string;
+  displayName: string;
+  accountStatus: "pending" | "active" | "suspended";
+  role: StoreMembershipRole;
+  scope: StoreMembershipScope;
+  status: StoreMembershipStatus;
+  acceptedAt: string;
+  branchIds: string[];
+  branchNames: string[];
+}
+
+export interface StorePendingInvitation {
+  id: string;
+  storeId: string;
+  email: string;
+  role: StoreMembershipRole;
+  scope: StoreMembershipScope;
+  status: StoreInvitationStatus;
+  expiresAt: string;
+  createdAt: string;
+  branchIds: string[];
+  branchNames: string[];
+}
+
+export interface AdminStoreTeam {
+  store: StoreSummary;
+  branches: BranchSummary[];
+  members: StoreTeamMember[];
+  invitations: StorePendingInvitation[];
 }
 
 export interface AdminDashboard {

@@ -37,6 +37,7 @@ export function AdminShell({
   const isCalendarRoute = pathname.startsWith(`/admin/stores/${storeId}/calendar`);
   const hasStore = Boolean(storeId);
   const activeStore = stores.find((store) => store.id === storeId);
+  const canOpenTeam = ["owner", "admin"].includes(activeStore?.viewerMembership?.role ?? "");
   const [isStoreMenuOpen, setIsStoreMenuOpen] = useState(false);
   const storeSwitcherRef = useRef<HTMLDivElement>(null);
 
@@ -104,6 +105,9 @@ export function AdminShell({
               <Link className={pathname.startsWith(`/admin/stores/${storeId}/series`) ? "active" : undefined} href={`/admin/stores/${storeId}/series`}>Series</Link>
               <Link className={navClassName(pathname, `/admin/stores/${storeId}/branches`)} href={`/admin/stores/${storeId}/branches`}>Sucursales</Link>
               <Link className={pathname.startsWith(`/admin/stores/${storeId}/banners`) ? "active" : undefined} href={`/admin/stores/${storeId}/banners`}>Banners</Link>
+              {canOpenTeam ? (
+                <Link className={pathname.startsWith(`/admin/stores/${storeId}/team`) ? "active" : undefined} href={`/admin/stores/${storeId}/team`}>Equipo</Link>
+              ) : null}
             </>
           ) : (
             <>
@@ -133,6 +137,9 @@ export function AdminShell({
                 <Link className={pathname.startsWith(`/admin/stores/${storeId}/series`) ? "active" : undefined} href={`/admin/stores/${storeId}/series`}>Series</Link>
                 <Link className={navClassName(pathname, `/admin/stores/${storeId}/branches`)} href={`/admin/stores/${storeId}/branches`}>Sucursales</Link>
                 <Link className={pathname.startsWith(`/admin/stores/${storeId}/banners`) ? "active" : undefined} href={`/admin/stores/${storeId}/banners`}>Banners</Link>
+                {canOpenTeam ? (
+                  <Link className={pathname.startsWith(`/admin/stores/${storeId}/team`) ? "active" : undefined} href={`/admin/stores/${storeId}/team`}>Equipo</Link>
+                ) : null}
                 <Link className={navClassName(pathname, "/admin/stores")} href="/admin/stores">Tiendas</Link>
               </>
             ) : (

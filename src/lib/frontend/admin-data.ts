@@ -1,11 +1,14 @@
 import type {
   AdminDashboard,
   AdminStoreOverview,
+  AdminStoreTeam,
   AdminStoreWorkspace,
   BranchSummary,
   EventSeriesSummary,
   EventSummary,
+  StorePendingInvitation,
   StoreSummary,
+  StoreTeamMember,
 } from "@/lib/frontend/domain";
 import { requireUser } from "@/lib/auth/require-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -26,6 +29,13 @@ type StoreRow = {
   timezone: string;
   status: StoreSummary["status"];
   is_publicly_visible: boolean | null;
+};
+
+type ViewerMembershipRow = {
+  store_id: string;
+  role: StoreTeamMember["role"];
+  scope: StoreTeamMember["scope"];
+  status: StoreTeamMember["status"];
 };
 
 type BranchRow = {
@@ -158,6 +168,48 @@ type StoreMediaAssetRow = {
   created_at: string;
 };
 
+type MembershipAssignmentRow = {
+  branch_id: string;
+  branches: {
+    name: string;
+  } | { name: string }[] | null;
+};
+
+type StoreMembershipRow = {
+  id: string;
+  store_id: string;
+  user_account_id: string;
+  role: StoreTeamMember["role"];
+  scope: StoreTeamMember["scope"];
+  status: StoreTeamMember["status"];
+  accepted_at: string;
+  user_accounts: {
+    display_name: string;
+    status: StoreTeamMember["accountStatus"];
+  } | { display_name: string; status: StoreTeamMember["accountStatus"] }[] | null;
+  branch_membership_assignments: MembershipAssignmentRow[] | null;
+};
+
+type InvitationBranchRow = {
+  branch_id: string;
+  branches: {
+    name: string;
+  } | { name: string }[] | null;
+};
+
+type StoreInvitationRow = {
+  id: string;
+  store_id: string;
+  email_normalized: string;
+  role: StorePendingInvitation["role"];
+  scope: StorePendingInvitation["scope"];
+  status: StorePendingInvitation["status"];
+  expires_at: string;
+  created_at: string;
+  accepted_by_account_id: string | null;
+  store_membership_invitation_branches: InvitationBranchRow[] | null;
+};
+
 type AdminDataSet = {
   stores: StoreSummary[];
   branches: BranchSummary[];
@@ -201,6 +253,52 @@ function mapStoreMediaAsset(row: StoreMediaAssetRow): AdminStoreMediaAsset {
   };
 }
 
+function firstRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+function mapStoreTeamMember(row: StoreMembershipRow, invitedEmailByAccountId = new Map<string, string>()): StoreTeamMember {
+  const assignments = row.branch_membership_assignments ?? [];
+  const account = firstRelation(row.user_accounts);
+  const invitedEmail = invitedEmailByAccountId.get(row.user_account_id);
+
+  return {
+    id: row.id,
+    storeId: row.store_id,
+    userAccountId: row.user_account_id,
+    displayName: account?.display_name ?? invitedEmail ?? "Usuario de tienda",
+    accountStatus: account?.status ?? "pending",
+    role: row.role,
+    scope: row.scope,
+    status: row.status,
+    acceptedAt: row.accepted_at,
+    branchIds: assignments.map((assignment) => assignment.branch_id),
+    branchNames: assignments
+      .map((assignment) => firstRelation(assignment.branches)?.name)
+      .filter((name): name is string => Boolean(name)),
+  };
+}
+
+function mapStoreInvitation(row: StoreInvitationRow): StorePendingInvitation {
+  const branches = row.store_membership_invitation_branches ?? [];
+
+  return {
+    id: row.id,
+    storeId: row.store_id,
+    email: row.email_normalized,
+    role: row.role,
+    scope: row.scope,
+    status: row.status,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+    branchIds: branches.map((branch) => branch.branch_id),
+    branchNames: branches
+      .map((branch) => firstRelation(branch.branches)?.name)
+      .filter((name): name is string => Boolean(name)),
+  };
+}
+
 function isUpcoming(event: EventSummary) {
   return new Date(event.startsAt).getTime() > Date.now() && event.status !== "cancelled";
 }
@@ -213,7 +311,13 @@ function branchAddress(branch: BranchRow) {
   return [branch.address_line, branch.city, branch.region].filter(Boolean).join(", ");
 }
 
-function mapStore(row: StoreRow, branches: BranchSummary[]): StoreSummary {
+function mapStore(
+  row: StoreRow,
+  branches: BranchSummary[],
+  viewerMembershipsByStoreId = new Map<string, ViewerMembershipRow>(),
+): StoreSummary {
+  const viewerMembership = viewerMembershipsByStoreId.get(row.id);
+
   return {
     id: row.id,
     slug: row.slug,
@@ -224,6 +328,13 @@ function mapStore(row: StoreRow, branches: BranchSummary[]): StoreSummary {
     isPubliclyVisible: row.is_publicly_visible ?? true,
     cityLabel: cityLabelForStore(row.id, branches),
     logoUrl: row.logo_url ?? undefined,
+    viewerMembership: viewerMembership
+      ? {
+        role: viewerMembership.role,
+        scope: viewerMembership.scope,
+        status: viewerMembership.status,
+      }
+      : undefined,
   };
 }
 
@@ -377,7 +488,7 @@ function buildOverview(store: StoreSummary, data: AdminDataSet): AdminStoreOverv
 
 async function loadAdminData(): Promise<AdminDataSet> {
   const client = await createSupabaseServerClient();
-  await requireUser(client);
+  const user = await requireUser(client);
 
   const { data: branchRows, error: branchError } = await client
     .from("branches")
@@ -395,7 +506,24 @@ async function loadAdminData(): Promise<AdminDataSet> {
     .order("name");
   if (storeError) throw storeError;
 
-  const stores = (storeRows as StoreRow[]).map((row) => mapStore(row, branches));
+  const storeIdsFromRows = (storeRows as StoreRow[]).map((store) => store.id);
+  let viewerMembershipRows: ViewerMembershipRow[] = [];
+  if (storeIdsFromRows.length) {
+    const { data, error: viewerMembershipError } = await client
+      .from("store_memberships")
+      .select("store_id,role,scope,status")
+      .eq("user_account_id", user.id)
+      .eq("status", "active")
+      .is("deleted_at", null)
+      .in("store_id", storeIdsFromRows);
+    if (viewerMembershipError) throw viewerMembershipError;
+    viewerMembershipRows = data as ViewerMembershipRow[];
+  }
+
+  const viewerMembershipsByStoreId = new Map(
+    viewerMembershipRows.map((membership) => [membership.store_id, membership]),
+  );
+  const stores = (storeRows as StoreRow[]).map((row) => mapStore(row, branches, viewerMembershipsByStoreId));
   const storeIds = stores.map((store) => store.id);
 
   if (!storeIds.length) {
@@ -554,6 +682,55 @@ export async function getAdminStore(storeId: string): Promise<AdminStoreWorkspac
       .filter((event) => event.storeId === store.id)
       .sort((left, right) => left.startsAt.localeCompare(right.startsAt)),
     series: data.series.filter((item) => item.storeId === store.id),
+  };
+}
+
+export async function getAdminStoreTeam(storeId: string): Promise<AdminStoreTeam | null> {
+  const workspace = await getAdminStore(storeId);
+  if (!workspace) return null;
+  if (!["owner", "admin"].includes(workspace.overview.store.viewerMembership?.role ?? "")) {
+    return null;
+  }
+
+  const client = await createSupabaseServerClient();
+  await requireUser(client);
+
+  const { data: memberRows, error: memberError } = await client
+    .from("store_memberships")
+    .select(`
+      id,store_id,user_account_id,role,scope,status,accepted_at,
+      user_accounts(display_name,status),
+      branch_membership_assignments(branch_id,branches(name))
+    `)
+    .eq("store_id", storeId)
+    .is("deleted_at", null)
+    .order("role")
+    .order("accepted_at");
+  if (memberError) throw memberError;
+
+  const { data: invitationRows, error: invitationError } = await client
+    .from("store_membership_invitations")
+    .select(`
+      id,store_id,email_normalized,role,scope,status,expires_at,created_at,accepted_by_account_id,
+      store_membership_invitation_branches(branch_id,branches(name))
+    `)
+    .eq("store_id", storeId)
+    .in("status", ["pending", "accepted"])
+    .order("created_at", { ascending: false });
+  if (invitationError) throw invitationError;
+  const invitations = (invitationRows as unknown as StoreInvitationRow[]).map(mapStoreInvitation);
+  const invitedEmailByAccountId = new Map(
+    (invitationRows as unknown as StoreInvitationRow[])
+      .filter((invitation) => invitation.status === "accepted" && invitation.accepted_by_account_id)
+      .map((invitation) => [invitation.accepted_by_account_id as string, invitation.email_normalized]),
+  );
+
+  return {
+    store: workspace.overview.store,
+    branches: workspace.branches,
+    members: (memberRows as unknown as StoreMembershipRow[])
+      .map((member) => mapStoreTeamMember(member, invitedEmailByAccountId)),
+    invitations: invitations.filter((invitation) => invitation.status === "pending"),
   };
 }
 

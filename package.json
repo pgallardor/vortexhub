@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev:fresh": "rm -rf .next && next dev",
+    "build": "NEXT_DIST_DIR=.next-build next build",
+    "start": "NEXT_DIST_DIR=.next-build next start",
+    "clean:next": "rm -rf .next .next-build",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "supabase:start": "node scripts/prepare-local-email-template.mjs && supabase start",

@@ -23,6 +23,7 @@ export default async function AdminStoreDetailPage({ params }: { params: Promise
   const publicStatus = canManagePublicVisibility
     ? store.isPubliclyVisible ? "Publica" : "Oculta"
     : "Sin publicar";
+  const canOpenTeam = ["owner", "admin"].includes(store.viewerMembership?.role ?? "");
 
   return (
     <>
@@ -110,6 +111,17 @@ export default async function AdminStoreDetailPage({ params }: { params: Promise
           </div>
         </div>
       </section>
+      {canOpenTeam ? (
+        <section className="admin-section">
+          <div className="section-heading">
+            <div><p className="eyebrow">Equipo</p><h2>Administradores y staff</h2></div>
+            <Link className="button button-secondary" href={`/admin/stores/${store.id}/team`}>Gestionar equipo</Link>
+          </div>
+          <div className="panel-card">
+            <p>Owners administran membresías. Admins pueden revisar el equipo e invitar operadores sin tocar owners.</p>
+          </div>
+        </section>
+      ) : null}
       <section className="admin-section">
         <div className="section-heading">
           <div><p className="eyebrow">Automatización semanal</p><h2>Series recurrentes</h2></div>
