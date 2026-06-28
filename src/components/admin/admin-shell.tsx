@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Brand, StatusBadge } from "@/components/frontend";
-import type { StoreSummary } from "@/lib/frontend/domain";
+import type { StoreMembershipRole, StoreMembershipScope, StoreSummary } from "@/lib/frontend/domain";
 
 function navClassName(pathname: string, href: string) {
   return pathname === href ? "active" : undefined;
@@ -23,14 +23,47 @@ function StoreMark({ store }: { store: StoreSummary }) {
   );
 }
 
+type AdminViewer = {
+  displayName: string;
+  email: string | null;
+};
+
+function roleLabel(role?: StoreMembershipRole, scope?: StoreMembershipScope) {
+  if (role === "owner") return "Dueño";
+  if (role === "admin") return scope === "branches" ? "Admin sucursales" : "Admin tienda";
+  if (role === "staff") return scope === "branches" ? "Staff sucursales" : "Staff tienda";
+  return "Cuenta activa";
+}
+
+function SessionSummary({
+  activeStore,
+  viewer,
+}: {
+  activeStore?: StoreSummary;
+  viewer: AdminViewer;
+}) {
+  const membership = activeStore?.viewerMembership;
+
+  return (
+    <div className="admin-session-summary">
+      <p>Sesión</p>
+      <strong>{viewer.displayName}</strong>
+      {viewer.email ? <span>{viewer.email}</span> : null}
+      <small>{roleLabel(membership?.role, membership?.scope)}</small>
+    </div>
+  );
+}
+
 export function AdminShell({
   children,
   defaultStoreId,
   stores = [],
+  viewer,
 }: {
   children: ReactNode;
   defaultStoreId?: string;
   stores?: StoreSummary[];
+  viewer: AdminViewer;
 }) {
   const pathname = usePathname();
   const storeId = pathname.match(/^\/admin\/stores\/([^/]+)/)?.[1] ?? defaultStoreId;
@@ -116,6 +149,9 @@ export function AdminShell({
             </>
           )}
         </nav>
+        <div className="admin-session-area">
+          <SessionSummary activeStore={activeStore} viewer={viewer} />
+        </div>
         <form action="/auth/logout" method="post" className="admin-logout-form">
           <button className="admin-logout-button" type="submit">Cerrar sesión</button>
         </form>
@@ -124,9 +160,12 @@ export function AdminShell({
         <header className="admin-mobile-header">
           <div className="admin-mobile-topbar">
             <Brand />
-            <form action="/auth/logout" method="post">
-              <button className="admin-logout-button" type="submit">Cerrar sesión</button>
-            </form>
+            <div className="admin-mobile-session">
+              <SessionSummary activeStore={activeStore} viewer={viewer} />
+              <form action="/auth/logout" method="post">
+                <button className="admin-logout-button" type="submit">Cerrar sesión</button>
+              </form>
+            </div>
           </div>
           <nav className="admin-mobile-nav" aria-label="Navegación administrativa móvil">
             {hasStore ? (

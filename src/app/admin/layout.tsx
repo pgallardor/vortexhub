@@ -5,6 +5,10 @@ import { canUseStoreAdministration } from "@/lib/auth/account-requirements";
 import { getAdminStores } from "@/lib/frontend/admin-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+type AccountIdentityRow = {
+  display_name: string | null;
+};
+
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
   const supabase = await createSupabaseServerClient();
   const {
@@ -16,11 +20,21 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
     redirect("/auth/onboarding?redirectTo=/admin");
   }
 
+  const { data: account } = await supabase
+    .from("user_accounts")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle<AccountIdentityRow>();
+
   const stores = await getAdminStores();
   const defaultStoreId = stores[0]?.store.id;
+  const viewer = {
+    displayName: account?.display_name ?? user.email ?? "Usuario de tienda",
+    email: user.email ?? null,
+  };
 
   return (
-    <AdminShell defaultStoreId={defaultStoreId} stores={stores.map((overview) => overview.store)}>
+    <AdminShell defaultStoreId={defaultStoreId} stores={stores.map((overview) => overview.store)} viewer={viewer}>
       {children}
     </AdminShell>
   );
