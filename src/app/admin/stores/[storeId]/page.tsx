@@ -8,6 +8,7 @@ import { StoreActivationActions } from "@/components/admin/store-activation-acti
 import { StoreMediaUploader } from "@/components/admin/store-media-uploader";
 import { StoreVisibilityActions } from "@/components/admin/store-visibility-actions";
 import { PageHeader, StatusBadge } from "@/components/frontend";
+import { StoreCalendarShareLink } from "@/components/store-calendar-share-link";
 import { getAdminStore } from "@/lib/frontend/admin-data";
 
 export default async function AdminStoreDetailPage({ params }: { params: Promise<{ storeId: string }> }) {
@@ -88,6 +89,9 @@ export default async function AdminStoreDetailPage({ params }: { params: Promise
               ? "La tienda aparece en el directorio, su calendario publico y el calendario global."
               : "La tienda sigue operable en administracion, pero no aparece en el directorio ni en calendarios publicos."}
           </p>
+          {store.status === "active" && store.isPubliclyVisible ? (
+            <StoreCalendarShareLink compact storeName={store.name} storeSlug={store.slug} />
+          ) : null}
         </div>
       </section>
       <section className="admin-section">

@@ -955,6 +955,59 @@ Auditable context for one bulk event cancellation operation.
 Branch-closure execution links every affected event to one cancellation batch.
 Cancellation batches are immutable and do not use soft delete.
 
+### `short_links`
+
+Future official share links for store calendars, events, and approved campaign
+surfaces. Do not implement during Stage 1.
+
+Short links are not the canonical public identifier for a resource. They are an
+official sharing and redirect layer used for QR codes, posters, social posts,
+and long event or store slugs that are awkward to share. Canonical public
+routes continue to use stable slugs.
+
+The initial implementation should resolve only to VortexHub-owned canonical
+public destinations. Do not permit arbitrary external redirect URLs until there
+is a separate abuse, moderation, audit, and trust policy.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | uuid PK | |
+| `code` | varchar(16) | Short opaque code, unique when not deleted |
+| `vanity_path` | varchar(180) nullable | Optional approved human-readable path |
+| `destination_type` | varchar(30) | `store_calendar`, `event`, `campaign` |
+| `store_id` | uuid FK nullable | Required for store and store-scoped event links |
+| `event_id` | uuid FK nullable | Required for event links |
+| `status` | varchar(30) | `active`, `disabled`, `expired` |
+| `created_by_account_id` | uuid FK nullable | Store operator or platform actor |
+| `expires_at` | timestamptz nullable | Optional campaign or temporary link expiry |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+| `deleted_at` | timestamptz nullable | |
+
+Rules:
+
+- Generate `code` from a non-sequential, URL-safe alphabet and retry on
+  collision.
+- Keep `code` stable after creation.
+- Allow `vanity_path` only after validating reserved route words, offensive or
+  impersonating terms, ownership, and platform-brand conflicts.
+- Use partial unique indexes for active `code` and `vanity_path` values among
+  non-deleted records.
+- A `store_calendar` destination requires `store_id` and no `event_id`.
+- An `event` destination requires both `store_id` and `event_id`, and the event
+  must belong to that store.
+- A `campaign` destination requires a separately defined VortexHub-owned
+  destination contract before implementation.
+- Resolving a short link must re-check the destination's current public
+  visibility. Hidden stores, closed stores, unpublished events, deleted
+  resources, and unauthorized destinations must not leak internal state.
+- Cancelled published events may continue resolving to their canonical public
+  event page with cancellation state visible.
+- Expired or disabled links should return a neutral not-found or gone response.
+- Click analytics must begin as aggregate-only counts unless a privacy and
+  retention decision explicitly permits request-level metadata. Do not store
+  player identifiers or authentication state in short-link analytics.
+
 ### `event_registrations`
 
 Source of truth only for events with `registration_mode = 'internal'`.
@@ -1168,6 +1221,8 @@ Do not implement until required, but preserve these boundaries:
   structured reasons and compensating corrections.
 - `reward_redemptions`: reward claims and fulfillment.
 - `store_player_settings`: store-specific player preferences or restrictions.
+- `short_links`: official short share links for store calendars, events, and
+  approved VortexHub-owned campaign destinations.
 - Structured event logistics requirements and responses, only after defining
   purpose, consent, authorization, disclosure, and retention rules.
 

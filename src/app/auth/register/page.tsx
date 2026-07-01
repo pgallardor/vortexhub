@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Brand, Field } from "@/components/frontend";
+import { Brand } from "@/components/frontend";
 
 export default function RegisterPage() {
   return (
@@ -9,14 +9,16 @@ export default function RegisterPage() {
         <p className="eyebrow">Publica tu calendario</p>
         <h1>Registra tu tienda</h1>
         <p>
-          Durante el piloto, VortexHub crea cuentas de tiendas mediante invitación para mantener el
-          onboarding controlado y seguro.
+          Por ahora, el registro de tiendas no es autoservicio. Para sumar tu tienda al piloto o
+          preparar el acceso antes del lanzamiento oficial, ponte en contacto con Vortex.
         </p>
         <div className="form-grid">
-          <Field label="Correo del dueño">
-            <input autoComplete="email" placeholder="tu@tienda.com" readOnly type="email" />
-          </Field>
-          <Link className="button button-primary" href="/auth/login">Ya tengo invitación</Link>
+          <a className="button button-primary" href="mailto:pedro@pgrsoftware.net">Contactar a Vortex</a>
+          <p>
+            Escríbenos a <a className="text-link" href="mailto:pedro@pgrsoftware.net">pedro@pgrsoftware.net</a>
+            {" "}y te ayudamos a activar tu tienda.
+          </p>
+          <Link className="button button-secondary" href="/auth/login">Ya tengo invitación</Link>
         </div>
         <div className="auth-footer">
           <p>¿Ya tienes cuenta? <Link className="text-link" href="/auth/login">Iniciar sesión</Link></p>

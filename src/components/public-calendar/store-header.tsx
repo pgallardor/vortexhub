@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/frontend";
+import { StoreCalendarShareLink } from "@/components/store-calendar-share-link";
 import type { BranchSummary, StoreSummary } from "@/lib/frontend/domain";
 
 export function StoreHeader({
@@ -23,6 +24,7 @@ export function StoreHeader({
         <span>{branches.length} sucursales</span>
         <span>{eventCount} eventos futuros</span>
         <span>{store.cityLabel} · {store.timezone}</span>
+        <StoreCalendarShareLink storeName={store.name} storeSlug={store.slug} />
       </div>
     </header>
   );

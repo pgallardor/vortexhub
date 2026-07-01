@@ -90,6 +90,57 @@ public calendar, scoped to one store.
   not for every occurrence.
 - Continue using stable public slugs and direct event links.
 
+### 4. Future Official Share Links
+
+VortexHub should eventually provide official short share links for store
+calendars and individual events. These links optimize for posters, QR codes,
+social posts, chat messages, and other places where canonical public URLs can
+become too long or visually noisy.
+
+This is future scope and must not replace canonical public routes. Canonical
+store and event URLs remain readable slug routes such as
+`/stores/{store_slug}` and `/stores/{store_slug}/events/{event_slug}`. Official
+short links are an additional sharing layer that redirects to the canonical
+route.
+
+Use a dedicated short domain only after VortexHub has selected and secured an
+appropriate domain. The short domain should be treated as an official product
+surface, not as a third-party URL shortener. Candidate domains must be assessed
+for availability, renewal cost, ccTLD policy risk, brand clarity, and user
+trust before launch.
+
+Recommended future link shapes:
+
+- Store calendar default: `https://{short-domain}/s/{code}`.
+- Event default: `https://{short-domain}/e/{code}`.
+- Store vanity alias, when approved: `https://{short-domain}/{store_alias}`.
+- Event vanity alias, when approved:
+  `https://{short-domain}/{store_alias}/{event_alias}`.
+
+Default event links should use short opaque codes because event titles can be
+long, repeated, edited before publication, or date-specific. Vanity aliases are
+a convenience layer for stores or selected events, not the source of truth.
+
+Rules:
+
+- Do not permit arbitrary external redirect destinations in the initial
+  implementation.
+- Resolve only to VortexHub-owned canonical public destinations.
+- Do not expose internal UUIDs, sequential identifiers, draft resources, hidden
+  stores, unpublished events, or private player/profile data.
+- Cancelled published events may continue resolving to their canonical event
+  page with the cancellation state visible.
+- Hidden, closed, deleted, or unauthorized destinations should return a neutral
+  not-found or gone state rather than leaking private status details.
+- Reserve platform route words and brand-sensitive aliases such as `admin`,
+  `api`, `auth`, `stores`, `events`, `login`, `support`, and official-looking
+  names.
+- Custom vanity aliases must be moderated or otherwise controlled to avoid
+  impersonation, offensive terms, and confusion with platform-owned surfaces.
+- Short-link analytics should start with minimal aggregate counts. Any storage
+  of IP address, user agent, referrer, or location-derived data requires a
+  privacy and retention decision before production.
+
 ## Meaning Of "Promoted"
 
 VortexHub currently has no accepted definition or Stage 1 schema for an
