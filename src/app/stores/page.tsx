@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/frontend";
 import { PublicShell } from "@/components/public-shell";
 import { StoreDirectory } from "@/components/store-directory";
 import type { StoreSummary } from "@/lib/frontend/domain";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicServerClient } from "@/lib/supabase/server";
 import { PublicCalendarService } from "@/services/public-calendar-service";
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function StoresDirectoryPage() {
-  const service = new PublicCalendarService(await createSupabaseServerClient());
+  const service = new PublicCalendarService(createSupabasePublicServerClient());
   const activeStores = await service.listStores() as StoreSummary[];
 
   return (

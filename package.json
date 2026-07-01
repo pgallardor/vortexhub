@@ -13,7 +13,11 @@
     "supabase:start": "node scripts/prepare-local-email-template.mjs && supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "supabase:reset": "supabase db reset",
+    "supabase:reset": "supabase db reset && npm run supabase:seed:local",
+    "supabase:reset:db": "supabase db reset",
+    "supabase:seed:local": "node -- scripts/seed-local.mjs --env-file .env.local",
+    "supabase:seed:platform-banners": "node -- scripts/upload-platform-banners.mjs --env-file .env.local",
+    "supabase:seed:dev-users": "docker exec -i supabase_db_HubVortex psql -U postgres -d postgres -f - < supabase/seeds/02_dev_users.sql",
     "onboard:store-owner": "node -- scripts/invite-store-owner.mjs",
     "backoffice:banners": "node -- scripts/platform-banner-backoffice.mjs",
     "backoffice:banners:web": "node -- scripts/platform-banner-backoffice-web.mjs"
@@ -22,6 +26,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "next": "^15.2.4",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.34.5",
@@ -29,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.10",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "supabase": "^2.106.0",

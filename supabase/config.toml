@@ -248,6 +248,10 @@ otp_expiry = 3600
 subject = "Bienvenido a VortexHub"
 content_path = "/private/tmp/vortexhub-email-templates/invite.html"
 
+[auth.email.template.magic_link]
+subject = "Continúa en VortexHub"
+content_path = "/private/tmp/vortexhub-email-templates/magic_link.html"
+
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
 # enabled = true

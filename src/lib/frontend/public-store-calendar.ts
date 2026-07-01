@@ -3,12 +3,12 @@ import {
   mapPublicStoreCalendar,
   type PublicStoreCalendarPayload,
 } from "@/lib/frontend/public-calendar-data";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicServerClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/http/errors";
 import { PublicCalendarService } from "@/services/public-calendar-service";
 
 export async function getPublicStoreCalendar(storeSlug: string): Promise<PublicStoreCalendar | null> {
-  const service = new PublicCalendarService(await createSupabaseServerClient());
+  const service = new PublicCalendarService(createSupabasePublicServerClient());
 
   try {
     const payload = await service.getStoreCalendar(storeSlug) as PublicStoreCalendarPayload;

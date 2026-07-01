@@ -42,14 +42,30 @@ Useful commands:
 ```bash
 npm run supabase:status
 npm run supabase:reset
+npm run supabase:seed:local
+npm run supabase:seed:platform-banners
+npm run supabase:seed:dev-users
 npm run supabase:stop
 ```
+
+`npm run supabase:reset` recreates the local database, applies migrations,
+runs `supabase/seed.sql`, then runs the local post-seed. The post-seed restores
+platform banner files into Storage and creates local development users such as
+`store.owner@vortexhub.local`. Their local-only password is documented in
+`supabase/seeds/02_dev_users.sql`.
+
+The post-seed needs `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` because Storage
+objects cannot be reconstructed by `seed.sql` alone.
 
 Invite a new store owner during the pilot:
 
 ```bash
 npm run onboard:store-owner -- --env-file .env.local owner@example.com
 ```
+
+The onboarding command is account-aware: new emails receive a Supabase Auth
+invite, while existing Auth users receive a store-onboarding sign-in link and
+keep their current account/player profile.
 
 Run the local platform-banner backoffice against production:
 
@@ -70,13 +86,15 @@ or the terminal. Optionally set
 `VORTEXHUB_BACKOFFICE_ACTOR_ACCOUNT_ID` to an internal account UUID so audit
 rows include the human operator.
 
-Locally, the invite uses the Supabase Auth invite template in
-`supabase/templates/invite.html`, creates a session through `/auth/callback`,
-and sends the owner to `/auth/onboarding` to set a password, accept the current
-adult-age declaration, and activate the VortexHub account. Set
-`INVITE_EMAIL_PROVIDER=supabase` when testing with Mailpit.
+Locally, new-account onboarding uses the Supabase Auth invite template in
+`supabase/templates/invite.html`, while existing-account onboarding uses
+`supabase/templates/magic_link.html`. Both create a session through
+`/auth/callback` and send the owner to `/auth/onboarding` to set or reuse their
+account access, accept the current adult-age declaration, and activate the
+VortexHub account. Set `INVITE_EMAIL_PROVIDER=supabase` when testing with
+Mailpit.
 
-Local Supabase reads the template from `/private/tmp/vortexhub-email-templates`
+Local Supabase reads templates from `/private/tmp/vortexhub-email-templates`
 because Docker/OrbStack can be blocked from reading templates mounted from
 macOS `Documents`. `npm run supabase:start` prepares that file before starting
 Supabase. After changing local Auth email templates, restart Supabase so Auth

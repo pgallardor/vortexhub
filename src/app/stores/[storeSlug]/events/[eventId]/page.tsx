@@ -8,7 +8,7 @@ import {
   type PublicEventDetail,
 } from "@/lib/frontend/public-calendar-data";
 import type { EventSummary } from "@/lib/frontend/domain";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicServerClient } from "@/lib/supabase/server";
 import { ApiError } from "@/lib/http/errors";
 import { PublicCalendarService } from "@/services/public-calendar-service";
 
@@ -80,7 +80,7 @@ export default async function PublicEventPage({
 }) {
   const { storeSlug, eventId } = await params;
   const { from } = await searchParams;
-  const service = new PublicCalendarService(await createSupabaseServerClient());
+  const service = new PublicCalendarService(createSupabasePublicServerClient());
   let eventDetail: PublicEventDetail;
 
   try {

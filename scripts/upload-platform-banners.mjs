@@ -1,6 +1,83 @@
 import { readFile } from "node:fs/promises";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
+
+function parseArgs(args) {
+  let envFile;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === "--env-file") {
+      envFile = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--env-file=")) {
+      envFile = arg.slice("--env-file=".length);
+      continue;
+    }
+
+    throw new Error(`Unexpected argument: ${arg}`);
+  }
+
+  return { envFile };
+}
+
+function unquoteEnvValue(value) {
+  const trimmed = value.trim();
+  const quote = trimmed[0];
+
+  if ((quote === '"' || quote === "'") && trimmed.endsWith(quote)) {
+    return trimmed
+      .slice(1, -1)
+      .replaceAll("\\n", "\n")
+      .replaceAll("\\r", "\r")
+      .replaceAll("\\t", "\t")
+      .replaceAll("\\\"", '"')
+      .replaceAll("\\'", "'");
+  }
+
+  return trimmed;
+}
+
+function loadEnvFile(envFile) {
+  if (!envFile) return;
+
+  const envPath = path.resolve(process.cwd(), envFile);
+
+  if (!existsSync(envPath)) {
+    throw new Error(`Env file not found: ${envPath}`);
+  }
+
+  const content = readFileSync(envPath, "utf8");
+
+  for (const [lineIndex, rawLine] of content.split(/\r?\n/).entries()) {
+    const line = rawLine.trim();
+
+    if (!line || line.startsWith("#")) continue;
+
+    const normalizedLine = line.startsWith("export ") ? line.slice("export ".length).trim() : line;
+    const match = normalizedLine.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+
+    if (!match) {
+      throw new Error(`Invalid env syntax in ${envPath}:${lineIndex + 1}`);
+    }
+
+    process.env[match[1]] = unquoteEnvValue(match[2]);
+  }
+}
+
+try {
+  const { envFile } = parseArgs(process.argv.slice(2));
+  loadEnvFile(envFile);
+} catch (error) {
+  console.error(error.message);
+  console.error("Usage: node scripts/upload-platform-banners.mjs [--env-file .env.local]");
+  process.exit(1);
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -9,8 +86,7 @@ const sourceDir = path.join(process.cwd(), "public/Banners/optimized/platform");
 
 if (!serviceRoleKey) {
   console.error("Missing SUPABASE_SERVICE_ROLE_KEY.");
-  console.error("Get it from `supabase status`, then run:");
-  console.error("SUPABASE_SERVICE_ROLE_KEY='<service_role_key>' node scripts/upload-platform-banners.mjs");
+  console.error("Get it from `npm run supabase:status`, then add it to `.env.local`.");
   process.exit(1);
 }
 

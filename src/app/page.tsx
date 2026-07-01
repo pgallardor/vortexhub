@@ -4,7 +4,7 @@ import {
   mapPublicCalendarItem,
   type PublicCalendarResult,
 } from "@/lib/frontend/public-calendar-data";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicServerClient } from "@/lib/supabase/server";
 import { PublicCalendarService } from "@/services/public-calendar-service";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ function shiftDateKey(dateKey: string, days: number) {
 export default async function HomePage() {
   const referenceDate = new Date().toISOString();
   const todayKey = dateKeyInTimeZone(referenceDate, discoveryTimeZone);
-  const service = new PublicCalendarService(await createSupabaseServerClient());
+  const service = new PublicCalendarService(createSupabasePublicServerClient());
   const calendar = await service.listCalendar({
     from: todayKey,
     to: shiftDateKey(todayKey, 6),

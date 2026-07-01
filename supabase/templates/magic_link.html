@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Continúa en VortexHub</title>
+  </head>
+  <body style="margin:0;background:#090c12;color:#eef3fb;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#090c12;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#111722;border:1px solid #2b3545;border-radius:16px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,.26);">
+            <tr>
+              <td style="height:5px;background:#67a9ff;"></td>
+            </tr>
+            <tr>
+              <td style="padding:32px 32px 14px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin-bottom:22px;">
+                  <tr>
+                    <td style="width:54px;height:54px;border:1px solid #67a9ff55;border-radius:16px;background:#0a101a;text-align:center;vertical-align:middle;">
+                      <img src="{{ .SiteURL }}/brand/vortex-logo.png" width="30" height="38" alt="" style="display:inline-block;vertical-align:middle;">
+                    </td>
+                    <td style="padding-left:12px;color:#eef3fb;font-size:18px;font-weight:800;letter-spacing:.06em;">VORTEXHUB</td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 8px;color:#67a9ff;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;">Acceso de tienda</p>
+                <h1 style="margin:0 0 12px;color:#eef3fb;font-size:30px;line-height:1.15;">Continúa con tu cuenta VortexHub</h1>
+                <p style="margin:0 0 24px;color:#b6c1d2;font-size:16px;line-height:1.65;">
+                  Usa tu cuenta existente para activar o continuar el acceso de tienda.
+                  Tu perfil de jugador y tu identidad de cuenta se mantienen separados.
+                </p>
+                <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&redirect_to={{ .RedirectTo }}" style="display:inline-block;background:#67a9ff;color:#08101b;text-decoration:none;font-weight:800;padding:13px 20px;border-radius:10px;">
+                  Continuar con mi cuenta
+                </a>
+                <p style="margin:24px 0 0;color:#94a1b5;font-size:13px;line-height:1.6;">
+                  Este enlace es personal, expira pronto y solo debe ser usado por {{ .Email }}.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 32px;color:#94a1b5;font-size:12px;line-height:1.55;">
+                <p style="margin:0 0 10px;">Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+                <p style="margin:0 0 18px;word-break:break-all;">
+                  <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&redirect_to={{ .RedirectTo }}" style="color:#9ec9ff;">{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=magiclink&redirect_to={{ .RedirectTo }}</a>
+                </p>
+                <p style="margin:0;">Si no pediste continuar el acceso de tienda, puedes ignorar este correo.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

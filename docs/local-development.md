@@ -70,10 +70,10 @@ Después puedes comprobar el esquema:
 npx supabase db lint --local --level warning
 ```
 
-## 4. Reiniciar La Base Y Las Migraciones
+## 4. Reiniciar La Base, Las Migraciones Y El Seed Local
 
 Para eliminar todos los datos locales, recrear la base, aplicar todas las
-migraciones y ejecutar el seed:
+migraciones, ejecutar el seed SQL y reconstruir assets locales:
 
 ```bash
 npm run supabase:reset
@@ -84,9 +84,61 @@ Este comando es destructivo para los datos locales. Ejecuta:
 1. Recreación de PostgreSQL local.
 2. Todas las migraciones de `supabase/migrations/`.
 3. El contenido de `supabase/seed.sql`.
+4. El seed local post-reset con `scripts/seed-local.mjs`.
 
 Úsalo después de modificar migraciones existentes o cuando necesites volver a
 un estado conocido.
+
+El seed local post-reset restaura los objetos de Storage para banners de
+plataforma desde `public/Banners/optimized/platform` y carga usuarios locales de
+desarrollo. Necesita `SUPABASE_SERVICE_ROLE_KEY` en `.env.local`; obtén la key
+desde `npm run supabase:status` y guárdala solo en archivos locales.
+
+Si necesitas recrear únicamente la base sin post-seed:
+
+```bash
+npm run supabase:reset:db
+```
+
+## 4.1. Reejecutar Seeds Locales
+
+`npm run supabase:reset` carga `supabase/seed.sql`, que contiene el catálogo
+base, documentos legales y buckets. Los objetos de Storage y los usuarios de
+desarrollo viven en seeds locales separados para evitar cargarlos
+accidentalmente en producción.
+
+Para reejecutar todo el seed local sin resetear la base:
+
+```bash
+npm run supabase:seed:local
+```
+
+Para restaurar solo banners de plataforma:
+
+```bash
+npm run supabase:seed:platform-banners
+```
+
+Para recrear solo usuarios locales:
+
+```bash
+npm run supabase:seed:dev-users
+```
+
+Contraseña para todos:
+
+```text
+DevPassword123!
+```
+
+Usuarios disponibles:
+
+```text
+platform.admin@vortexhub.local
+store.owner@vortexhub.local
+store.admin@vortexhub.local
+store.staff@vortexhub.local
+```
 
 ## 5. Lanzar La Aplicación
 
@@ -146,6 +198,27 @@ Los correos enviados por Supabase Auth aparecen en Mailpit:
 ```text
 http://127.0.0.1:54324
 ```
+
+Para invitar un owner de tienda en local:
+
+```bash
+npm run onboard:store-owner -- --env-file .env.local owner@example.com
+```
+
+Si el correo no existe en Auth, Supabase crea el usuario invitado. Si el correo
+ya existe, el comando envía un magic link al onboarding de tienda para que esa
+misma cuenta pueda crear o administrar una tienda sin perder su identidad de
+jugador.
+
+Los templates locales viven en:
+
+```text
+supabase/templates/invite.html
+supabase/templates/magic_link.html
+```
+
+Después de cambiar templates de Auth, reinicia Supabase para que Auth recargue
+`supabase/config.toml`.
 
 ## 7. Terminar La Aplicación
 

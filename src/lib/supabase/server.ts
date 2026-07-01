@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 type CookieToSet = {
@@ -25,6 +26,20 @@ export async function createSupabaseServerClient() {
             // Server Components cannot write cookies. Route Handlers can.
           }
         },
+      },
+    },
+  );
+}
+
+export function createSupabasePublicServerClient() {
+  return createClient(
+    requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    requiredEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    {
+      auth: {
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        persistSession: false,
       },
     },
   );

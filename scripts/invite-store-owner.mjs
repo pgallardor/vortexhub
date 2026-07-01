@@ -105,6 +105,7 @@ const emailProvider = (
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendFromEmail = process.env.RESEND_FROM_EMAIL;
 const resendReplyToEmail = process.env.RESEND_REPLY_TO_EMAIL;
+const supabasePublicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!email) {
   printUsage();
@@ -141,6 +142,17 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
     persistSession: false,
   },
 });
+
+const publicSupabase = createClient(
+  supabaseUrl,
+  supabasePublicKey ?? serviceRoleKey,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  },
+);
 
 function escapeHtml(value) {
   return String(value)
@@ -247,15 +259,39 @@ async function sendWithResend({ acceptUrl }) {
   return payload?.id ?? "unknown";
 }
 
+async function findUserByEmail(targetEmail) {
+  const normalizedTarget = targetEmail.toLowerCase();
+  let page = 1;
+
+  while (page <= 20) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error(`Could not inspect existing users: ${error.message}`);
+
+    const user = data.users.find((candidate) => candidate.email?.toLowerCase() === normalizedTarget);
+    if (user) return user;
+    if (data.users.length < 1000) return null;
+
+    page += 1;
+  }
+
+  throw new Error("Could not inspect all existing users: pagination limit reached.");
+}
+
+const existingUser = await findUserByEmail(email);
+const linkType = existingUser ? "magiclink" : "invite";
+const onboardingUrl = existingUser
+  ? `${inviteRedirectUrl}?passwordMode=skip`
+  : inviteRedirectUrl;
+
 let data;
 let error;
 
 if (emailProvider === "resend") {
   ({ data, error } = await supabase.auth.admin.generateLink({
-    type: "invite",
+    type: linkType,
     email,
     options: {
-      redirectTo: inviteRedirectUrl,
+      redirectTo: onboardingUrl,
       data: {
         onboarding: "store_owner",
       },
@@ -272,7 +308,7 @@ if (emailProvider === "resend") {
 
     try {
       const messageId = await sendWithResend({ acceptUrl });
-      console.log(`Invitation sent to ${email} with Resend.`);
+      console.log(`Store onboarding link sent to ${email} with Resend.`);
       console.log(`Resend message id: ${messageId}`);
     } catch (sendError) {
       console.error(`Could not send invite email to ${email}: ${sendError.message}`);
@@ -280,12 +316,27 @@ if (emailProvider === "resend") {
     }
   }
 } else {
-  ({ data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
-    redirectTo: inviteRedirectUrl,
-    data: {
-      onboarding: "store_owner",
-    },
-  }));
+  if (existingUser) {
+    if (!supabasePublicKey) {
+      console.error("Missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY for existing-user magic link delivery.");
+      process.exit(1);
+    }
+
+    ({ data, error } = await publicSupabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: onboardingUrl,
+        shouldCreateUser: false,
+      },
+    }));
+  } else {
+    ({ data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: onboardingUrl,
+      data: {
+        onboarding: "store_owner",
+      },
+    }));
+  }
 }
 
 if (error) {
@@ -294,7 +345,8 @@ if (error) {
 }
 
 if (emailProvider === "supabase") {
-  console.log(`Invitation sent to ${email} with Supabase Auth email.`);
+  console.log(`Store onboarding link sent to ${email} with Supabase Auth email.`);
 }
 
-console.log(`Auth user id: ${data.user?.id ?? "unknown"}`);
+console.log(`Auth user id: ${existingUser?.id ?? data.user?.id ?? "unknown"}`);
+console.log(`Auth link type: ${linkType}`);

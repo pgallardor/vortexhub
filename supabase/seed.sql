@@ -51,6 +51,9 @@ where not exists (
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values
   ('platform-event-banners', 'platform-event-banners', true, 5242880, array['image/webp']),
-  ('custom-banner-sources', 'custom-banner-sources', false, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
-  ('custom-banner-optimized', 'custom-banner-optimized', true, 5242880, array['image/webp'])
-on conflict (id) do nothing;
+  ('store-media-sources', 'store-media-sources', false, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
+  ('store-media-optimized', 'store-media-optimized', true, 5242880, array['image/webp'])
+on conflict (id) do update
+set public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;

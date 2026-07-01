@@ -4,7 +4,13 @@ import { FormEvent, useState } from "react";
 import { Field } from "@/components/frontend";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-export function LoginForm({ redirectTo }: { redirectTo: string }) {
+export function LoginForm({
+  redirectTo,
+  submitLabel = "Entrar",
+}: {
+  redirectTo: string;
+  submitLabel?: string;
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -60,7 +66,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       </Field>
       {errorMessage ? <p className="form-error" role="alert">{errorMessage}</p> : null}
       <button className="button button-primary" disabled={isSubmitting} type="submit">
-        {isSubmitting ? "Entrando..." : "Entrar al panel"}
+        {isSubmitting ? "Entrando..." : submitLabel}
       </button>
     </form>
   );
