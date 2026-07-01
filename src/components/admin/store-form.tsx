@@ -46,7 +46,6 @@ export function StoreForm() {
       const formData = new FormData(event.currentTarget);
       const payload = {
         name: String(formData.get("name") ?? "").trim(),
-        slug: trimOrNull(formData.get("slug")) ?? undefined,
         description: trimOrNull(formData.get("description")),
         timezone: String(formData.get("timezone") ?? "").trim(),
       };
@@ -79,9 +78,6 @@ export function StoreForm() {
     <form className="form-card form-grid" onSubmit={onSubmit}>
       <Field label="Nombre de la tienda">
         <input name="name" placeholder="La Mazmorra TCG" required />
-      </Field>
-      <Field label="Slug público" hint="Opcional. Si lo dejas vacío, VortexHub genera uno desde el nombre.">
-        <input name="slug" placeholder="la-mazmorra-tcg" />
       </Field>
       <Field label="Descripción">
         <textarea name="description" placeholder="Describe tu comunidad, foco de juegos o tipo de eventos." />

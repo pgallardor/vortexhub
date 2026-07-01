@@ -68,8 +68,8 @@ export function AdminShell({
   const pathname = usePathname();
   const storeId = pathname.match(/^\/admin\/stores\/([^/]+)/)?.[1] ?? defaultStoreId;
   const isCalendarRoute = pathname.startsWith(`/admin/stores/${storeId}/calendar`);
-  const hasStore = Boolean(storeId);
   const activeStore = stores.find((store) => store.id === storeId);
+  const hasStore = Boolean(activeStore);
   const canOpenTeam = ["owner", "admin"].includes(activeStore?.viewerMembership?.role ?? "");
   const [isStoreMenuOpen, setIsStoreMenuOpen] = useState(false);
   const storeSwitcherRef = useRef<HTMLDivElement>(null);
